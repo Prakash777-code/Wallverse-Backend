@@ -10,7 +10,7 @@ async function bootstrap() {
   };
 
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: 'https://wallverse-eight.vercel.app',
     credentials: true,
   });
   await app.listen(process.env.PORT ?? 3001);
