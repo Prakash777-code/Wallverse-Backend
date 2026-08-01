@@ -41,6 +41,7 @@ export class UserService {
     };
 
     await this.cacheManager.set(key,result)
+    console.log("Profile cache")
 
     console.log(result)
 

@@ -16,7 +16,7 @@ import { AiModule } from './ai/ai.module';
     AuthModule,
     FavouritesModule,
     PexelsModule,
-    CacheModule.register(),
+    CacheModule.register({isGlobal:true, ttl:30*60*1000}),
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -31,7 +31,6 @@ import { AiModule } from './ai/ai.module';
   controllers: [AppController],
   providers: [
     AppService,
-    FavouritesService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

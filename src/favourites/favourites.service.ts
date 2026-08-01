@@ -29,7 +29,8 @@ export class FavouritesService {
       });
 
       await this.cacheManager.del(`favourites${userId}`);
-      await this.cacheManager.del(`profile:${userId}`)
+      await this.cacheManager.del(`profile:${userId}`);
+      console.log('User profile cache deleted');
 
       return {
         message: 'Saved to favourites',
@@ -82,7 +83,9 @@ export class FavouritesService {
   }
 
   async deleteWallpaper(userId: number, wallpaperId: number) {
+    console.log('Enetered delete wallpaper');
     const wallpaper = await this.getWallpaperById(userId, wallpaperId);
+    console.log('Wallpaper found');
     const deleteWallpaper = await this.prisma.favourites.delete({
       where: {
         userId_wallpaperId: {
@@ -92,8 +95,23 @@ export class FavouritesService {
       },
     });
 
+    const key = `profile:${userId}`;
+
+    const before = await this.cacheManager.get(key);
+    console.log('Before delete:', before);
+
+    await this.cacheManager.del(key);
+
+    const after = await this.cacheManager.get(key);
+    console.log('After delete:', after);
+
+    console.log('Deleted from database');
+
     await this.cacheManager.del(`favourites${userId}`);
-    await this.cacheManager.del(`profile:${userId}`)
+    console.log('Deleted favourites cache');
+
+    await this.cacheManager.del(`profile:${userId}`);
+    console.log('Deleted profile cache');
 
     return {
       message: 'Wallpaper deleted',
