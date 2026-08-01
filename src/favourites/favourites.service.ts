@@ -29,6 +29,7 @@ export class FavouritesService {
       });
 
       await this.cacheManager.del(`favourites${userId}`);
+      await this.cacheManager.del(`profile:${userId}`)
 
       return {
         message: 'Saved to favourites',
@@ -92,6 +93,7 @@ export class FavouritesService {
     });
 
     await this.cacheManager.del(`favourites${userId}`);
+    await this.cacheManager.del(`profile:${userId}`)
 
     return {
       message: 'Wallpaper deleted',
