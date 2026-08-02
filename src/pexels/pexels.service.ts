@@ -8,7 +8,8 @@ export class PexelsService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
   async getWallpapers(pexelsQueryDto: PexelsQueryDto) {
     const { query, page = 1, perPage = 16 } = pexelsQueryDto;
-    const key = `pexels:${query}`;
+    const normalizeQuery = query.toLowerCase().trim()
+    const key = `pexels:${normalizeQuery}:${page}:${perPage}`;
     const cachedData = await this.cacheManager.get(key);
     if (cachedData) {
       return {
@@ -17,7 +18,7 @@ export class PexelsService {
       };
     }
     const result = await fetch(
-      `https://api.pexels.com/v1/search?query=${query}&page=${page}&per_page=${perPage}`,
+      `https://api.pexels.com/v1/search?query=${normalizeQuery}&page=${page}&per_page=${perPage}`,
       {
         headers: {
           Authorization: process.env.PEXELS_API_KEY!,
