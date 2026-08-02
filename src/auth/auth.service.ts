@@ -45,7 +45,7 @@ export class AuthService {
       },
     });
 
-    console.log(user);
+    console.log("From register",user);
 
     return {
       message: 'Registered successfully',
