@@ -20,6 +20,7 @@ model User {
   created_at DateTime @default(now())
 
 favourites Favourites[]
+downloads WallpaperDownload[]
 }
 
 model Favourites {
@@ -31,5 +32,26 @@ model Favourites {
 
    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
    @@unique([userId,wallpaperId])
+}
+
+model WallpaperStats {
+  id          Int      @id @default(autoincrement())
+  wallpaperId String   @unique
+  views       Int      @default(0)
+  downloads   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WallpaperDownload {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  wallpaperId String @unique
+  createdAt   DateTime @default(now())
+  imageUrl String
+  photographer String
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 

@@ -3,4 +3,5 @@ export interface UserProfileType{
     email:string,
     memberSince:string,
     totalFavourites:number
+    downloads:number
 }

@@ -33,11 +33,18 @@ export class UserService {
       },
     });
 
+    const download = await this.prisma.wallpaperDownload.count({
+      where:{
+        userId:userId
+      }
+    })
+
     const result: UserProfileType = {
       name: details?.name,
       email: details?.email,
       memberSince: details?.created_at.toString(),
       totalFavourites: totalFavourites,
+      downloads:download
     };
 
     await this.cacheManager.set(key,result)

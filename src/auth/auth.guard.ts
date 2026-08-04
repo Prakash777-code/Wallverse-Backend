@@ -13,11 +13,6 @@ export class AuthGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    console.log('Method:', request.method);
-    console.log('URL:', request.url);
-    console.log('Cookies:', request.cookies);
-    console.log(request.headers.cookie);
-    console.log(request.cookies);
     const token = request.cookies.accessToken;
 
     if (!token) {
