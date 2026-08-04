@@ -46,7 +46,7 @@ model WallpaperStats {
 model WallpaperDownload {
   id          Int      @id @default(autoincrement())
   userId      Int
-  wallpaperId String @unique
+  wallpaperId String 
   createdAt   DateTime @default(now())
   imageUrl String
   photographer String
