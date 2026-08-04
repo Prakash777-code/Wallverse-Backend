@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PexelsQueryDto } from './dto/pexels.quer.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
@@ -8,7 +8,7 @@ export class PexelsService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
   async getWallpapers(pexelsQueryDto: PexelsQueryDto) {
     const { query, page = 1, perPage = 16 } = pexelsQueryDto;
-    const normalizeQuery = query.toLowerCase().trim()
+    const normalizeQuery = query.toLowerCase().trim();
     const key = `pexels:${normalizeQuery}:${page}:${perPage}`;
     const cachedData = await this.cacheManager.get(key);
     if (cachedData) {
@@ -42,5 +42,15 @@ export class PexelsService {
       source: 'Pexels',
       data: wallpapers,
     };
+  }
+
+  async downloadImage(url: string) {
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error('Failed to download wallpaper');
+    }
+
+    return Buffer.from(await res.arrayBuffer());
   }
 }

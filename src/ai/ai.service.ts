@@ -9,19 +9,21 @@ export class AiService {
   async generateImage(prompt: PromptDto) {
     const key = `prompt:${prompt.prompt.toLowerCase()}`;
     const cachedData = await this.cacheManager.get<string>(key);
-    if(cachedData){
-        return{
-            source:"Cache",
-            imageUrl:cachedData
-        }
+    if (cachedData) {
+      return {
+        source: 'Cache',
+        imageUrl: cachedData,
+      };
     }
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.prompt)}?width=1920&height=1080&nologo=true`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
+      prompt.prompt,
+    )}?model=flux&width=1920&height=1080&enhance=true&nologo=true`;
 
     await this.cacheManager.set(key, imageUrl, 24 * 60 * 60 * 1000);
 
     return {
-      source:"Api",
-      imageUrl
+      source: 'Api',
+      imageUrl,
     };
   }
 }
