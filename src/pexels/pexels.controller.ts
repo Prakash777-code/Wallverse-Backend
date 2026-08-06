@@ -1,7 +1,9 @@
 import {
   Controller,
+  Delete,
   Get,
   Inject,
+  Post,
   Query,
   Req,
   Res,
@@ -47,6 +49,8 @@ export class PexelsController {
 
     const image = await this.pexlesService.downloadImage(url);
 
+    await this.cacheManager.del(`downloads:${request.user.userId}`);
+
     await this.pexlesService.createDownload(
       request.user.userId,
       url,
@@ -64,5 +68,19 @@ export class PexelsController {
     });
 
     response.send(image);
+  }
+
+  @Get('downloaded')
+  @UseGuards(AuthGuard)
+  async getDownloads(@Req() request: Request) {
+    console.log("Reached download")
+    return this.pexlesService.getDownloads(request.user.userId);
+  }
+
+  @Delete("clear")
+  @UseGuards(AuthGuard)
+  async clearAllDonwloads(@Req() request:Request){
+    await this.cacheManager.del(`profile:${request.user.userId}`);
+    return this.pexlesService.clearAllDownloads(request.user.userId)
   }
 }

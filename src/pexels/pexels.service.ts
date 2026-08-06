@@ -73,4 +73,39 @@ export class PexelsService {
       },
     });
   }
+
+  async getDownloads(userId: number) {
+    const key = `downloads:${userId}`;
+    const cachedData = await this.cacheManager.get(key);
+    if (cachedData) {
+      return {
+        source: 'Cache',
+        data: cachedData,
+      };
+    }
+    const downloads = await this.prisma.wallpaperDownload.findMany({
+      where: {
+        userId: userId,
+      },
+    });
+
+    await this.cacheManager.set(key, downloads);
+
+    return {
+      source: 'Database',
+      data: downloads,
+    };
+  }
+  
+  async clearAllDownloads(userId: number) {
+    const clear = await this.prisma.wallpaperDownload.deleteMany({
+      where:{
+        userId:userId
+      }
+    })
+
+    return{
+      message:"Downlods cleared"
+    }
+  }
 }
