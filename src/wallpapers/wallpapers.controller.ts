@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -10,19 +11,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PexelsQueryDto } from './dto/pexels.quer.dto';
-import { PexelsService } from './pexels.service';
+import { WallpaperService } from './wallpapers.service';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import type { Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { DeleteDownloadDto } from './dto/deleteDownload.dto';
 
 @Controller('pexels')
 @SkipThrottle()
-export class PexelsController {
+export class WallpapersController {
   constructor(
-    private pexlesService: PexelsService,
+    private pexlesService: WallpaperService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
@@ -73,14 +75,21 @@ export class PexelsController {
   @Get('downloaded')
   @UseGuards(AuthGuard)
   async getDownloads(@Req() request: Request) {
-    console.log("Reached download")
+    console.log('Reached download');
     return this.pexlesService.getDownloads(request.user.userId);
   }
 
-  @Delete("clear")
+  @Delete('download')
   @UseGuards(AuthGuard)
-  async clearAllDonwloads(@Req() request:Request){
-    await this.cacheManager.del(`profile:${request.user.userId}`);
-    return this.pexlesService.clearAllDownloads(request.user.userId)
+  async removeDownloadImage(
+    @Req() request: Request,
+    @Body() dto: DeleteDownloadDto,
+  ) {
+    await this.cacheManager.del(`downloads:${request.user.userId}`)
+    return this.pexlesService.removeDownloadImage(
+      request.user.userId,
+      dto.wallpaperId,
+      dto.imageUrl,
+    );
   }
 }

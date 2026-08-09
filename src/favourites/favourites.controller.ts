@@ -31,6 +31,8 @@ export class FavouritesController {
     @Body() favouriteDto: FavouriteDto,
     @Req() request: Request,
   ) {
+    console.log("Dto", favouriteDto)
+    console.log(request.user)
     return await this.favouriteService.favouriteWallpaper(
       request.user.userId,
       favouriteDto,

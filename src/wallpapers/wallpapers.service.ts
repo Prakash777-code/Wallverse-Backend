@@ -5,7 +5,7 @@ import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
-export class PexelsService {
+export class WallpaperService {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private prisma: PrismaService,
@@ -86,6 +86,9 @@ export class PexelsService {
     const downloads = await this.prisma.wallpaperDownload.findMany({
       where: {
         userId: userId,
+        imageUrl: {
+          not: '',
+        },
       },
     });
 
@@ -96,16 +99,25 @@ export class PexelsService {
       data: downloads,
     };
   }
-  
-  async clearAllDownloads(userId: number) {
-    const clear = await this.prisma.wallpaperDownload.deleteMany({
-      where:{
-        userId:userId
-      }
-    })
 
-    return{
-      message:"Downlods cleared"
-    }
+  async removeDownloadImage(
+    userId: number,
+    wallpaperId: string,
+    imageUrl: string,
+  ) {
+    await this.prisma.wallpaperDownload.updateMany({
+      where: {
+        userId,
+        wallpaperId,
+        imageUrl,
+      },
+      data: {
+        wallpaperId: null,
+        imageUrl: null,
+      },
+    });
+    return {
+      message: 'Wallpaper removed',
+    };
   }
 }

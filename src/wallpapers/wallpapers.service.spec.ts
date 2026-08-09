@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PexelsService } from './pexels.service';
+import { WallpaperService } from './wallpapers.service';
 
 describe('PexelsService', () => {
-  let service: PexelsService;
+  let service: WallpaperService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PexelsService],
+      providers: [WallpaperService],
     }).compile();
 
-    service = module.get<PexelsService>(PexelsService);
+    service = module.get<WallpaperService>(WallpaperService);
   });
 
   it('should be defined', () => {

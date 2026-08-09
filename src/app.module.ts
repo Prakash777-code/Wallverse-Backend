@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { FavouritesModule } from './favourites/favourites.module';
-import { PexelsModule } from './pexels/pexels.module';
+import { WallpapersModule } from './wallpapers/wallpapers.module';
 import { FavouritesService } from './favourites/favourites.service';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -15,7 +15,7 @@ import { AiModule } from './ai/ai.module';
   imports: [
     AuthModule,
     FavouritesModule,
-    PexelsModule,
+    WallpapersModule,
     CacheModule.register({isGlobal:true, ttl:30*60*1000}),
     ThrottlerModule.forRoot({
       throttlers: [
