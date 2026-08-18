@@ -69,6 +69,7 @@ export class AuthService {
 
     const payload: JwtPaylod = {
       userId: user.id,
+      role:user.role
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
@@ -88,6 +89,7 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
+        role:user.role
       },
     };
   }
@@ -105,10 +107,11 @@ export class AuthService {
       const newAccessToken = await this.jwtService.signAsync(
         {
           userId: payload.userId,
-          expiresIn: '5m',
+          role:payload.role,
         },
         {
           secret: process.env.JWT_SECRET,
+          expiresIn: '5m',
         },
       );
 

@@ -22,17 +22,18 @@ export class FavouritesController {
 
   @Post()
   @Throttle({
-    default:{
-      limit:10,
-      ttl:60000
-    }
+    default: {
+      limit: 10,
+      ttl: 60000,
+    },
   })
   async favouriteWallpaper(
     @Body() favouriteDto: FavouriteDto,
     @Req() request: Request,
   ) {
-    console.log("Dto", favouriteDto)
-    console.log(request.user)
+    console.log('FAVOURITE CONTROLLER HIT');
+    console.log('Dto', favouriteDto);
+    console.log(request.user);
     return await this.favouriteService.favouriteWallpaper(
       request.user.userId,
       favouriteDto,
@@ -41,18 +42,21 @@ export class FavouritesController {
 
   @Get()
   @Throttle({
-    default:{
-      limit:7,
-      ttl:60000
-    }
+    default: {
+      limit: 7,
+      ttl: 60000,
+    },
   })
   async getFavourites(@Req() request: Request) {
     return this.favouriteService.getFavouriteWallpapers(request.user.userId);
   }
 
-  @Get(":id")
-  async getWallpaperById(@Req() request:Request, wallpaperId:number){
-    return this.favouriteService.getWallpaperById(request.user.userId, wallpaperId)
+  @Get(':id')
+  async getWallpaperById(@Req() request: Request, wallpaperId: number) {
+    return this.favouriteService.getWallpaperById(
+      request.user.userId,
+      wallpaperId,
+    );
   }
 
   @Delete(':id')
@@ -66,5 +70,3 @@ export class FavouritesController {
     );
   }
 }
-
-

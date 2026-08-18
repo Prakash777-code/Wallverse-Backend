@@ -9,6 +9,7 @@ export class UserService {
   constructor(private prisma: PrismaService, @Inject(CACHE_MANAGER) private cacheManager: Cache,) {}
 
   async getUserProfile(userId: number) {
+
     const key = `profile:${userId}`
     const cachedData = await this.cacheManager.get(key)
     if(cachedData){
@@ -44,7 +45,8 @@ export class UserService {
       email: details?.email,
       memberSince: details?.created_at.toString(),
       totalFavourites: totalFavourites,
-      downloads:download
+      downloads:download,
+      plan:details.plan
     };
 
     await this.cacheManager.set(key,result)

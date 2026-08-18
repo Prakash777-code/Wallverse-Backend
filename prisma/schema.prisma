@@ -8,13 +8,17 @@ datasource db {
 }
 
 model User {
-  id         Int                 @id @default(autoincrement())
-  name       String
-  email      String              @unique
-  password   String
-  created_at DateTime            @default(now())
-  favourites Favourites[]
-  downloads  WallpaperDownload[]
+  id          Int                 @id @default(autoincrement())
+  name        String
+  email       String              @unique
+  password    String
+  created_at  DateTime            @default(now())
+  role        Role                @default(USER)
+  plan        PLAN                @default(FREE)
+  aiGenerated AiGenerated[]
+  favourites  Favourites[]
+  downloads   WallpaperDownload[]
+  uploadedWallpapers UploadedWallpapers[]
 }
 
 model Favourites {
@@ -47,4 +51,38 @@ model WallpaperDownload {
   user         User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
+}
+
+model AiGenerated {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  prompt    String
+  imageUrl  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model UploadedWallpapers{
+  id Int @id @default(autoincrement())
+  userId Int
+  title String
+  imageUrl String
+  userName String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum PLAN{
+  FREE
+  PRO 
+  PREMIUM
 }

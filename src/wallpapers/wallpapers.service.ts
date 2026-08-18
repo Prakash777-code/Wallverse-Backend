@@ -3,6 +3,7 @@ import { PexelsQueryDto } from './dto/pexels.quer.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
+import { UploadDto } from './dto/upload.dto';
 
 @Injectable()
 export class WallpaperService {
@@ -119,5 +120,18 @@ export class WallpaperService {
     return {
       message: 'Wallpaper removed',
     };
+  }
+
+  async uploadWallpaper(
+    image:Express.Multer.File,
+    uploadDto:UploadDto,
+    userId:number
+  ){
+    return{
+      message:"Wallpaper recieved",
+      filename:image.originalname,
+      size:image.size,
+      title:uploadDto.title,
+    }
   }
 }

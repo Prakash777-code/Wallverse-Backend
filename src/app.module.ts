@@ -4,15 +4,16 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { FavouritesModule } from './favourites/favourites.module';
 import { WallpapersModule } from './wallpapers/wallpapers.module';
-import { FavouritesService } from './favourites/favourites.service';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
 import { UserModule } from './user/user.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AiModule } from './ai/ai.module';
+import { AdminModule } from './admin/admin.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
+    PrismaModule,
     AuthModule,
     FavouritesModule,
     WallpapersModule,
@@ -27,14 +28,11 @@ import { AiModule } from './ai/ai.module';
     }),
     UserModule,
     AiModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
   ],
 })
 export class AppModule {}

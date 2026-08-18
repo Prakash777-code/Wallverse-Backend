@@ -8,7 +8,9 @@ import {
   Query,
   Req,
   Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PexelsQueryDto } from './dto/pexels.quer.dto';
 import { WallpaperService } from './wallpapers.service';
@@ -19,6 +21,9 @@ import { AuthGuard } from '../auth/auth.guard';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { DeleteDownloadDto } from './dto/deleteDownload.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadDto } from './dto/upload.dto';
+import type {} from 'multer';
 
 @Controller('pexels')
 @SkipThrottle()
@@ -91,5 +96,18 @@ export class WallpapersController {
       dto.wallpaperId,
       dto.imageUrl,
     );
+  }
+
+  @Post("upload")
+  @UseInterceptors(FileInterceptor("image"))
+  async uploadWallpaper(
+    @UploadedFile() image:Express.Multer.File,
+    @Body() uploadDto:UploadDto,
+    @Req() request:Request
+  ){
+    console.log("Reached uploadWallpaper function")
+    console.log(image)
+    console.log(uploadDto)
+    return this.pexlesService.uploadWallpaper(image,uploadDto,request.user.userId)
   }
 }
