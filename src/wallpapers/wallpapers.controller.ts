@@ -1,9 +1,12 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   Inject,
+  Param,
+  ParseIntPipe,
   Post,
   Query,
   Req,
@@ -14,7 +17,7 @@ import {
 } from '@nestjs/common';
 import { PexelsQueryDto } from './dto/pexels.quer.dto';
 import { WallpaperService } from './wallpapers.service';
-import { SkipThrottle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import type { Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
@@ -24,9 +27,9 @@ import { DeleteDownloadDto } from './dto/deleteDownload.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadDto } from './dto/upload.dto';
 import type {} from 'multer';
+import { request } from 'axios';
 
 @Controller('pexels')
-@SkipThrottle()
 export class WallpapersController {
   constructor(
     private pexlesService: WallpaperService,
@@ -90,7 +93,7 @@ export class WallpapersController {
     @Req() request: Request,
     @Body() dto: DeleteDownloadDto,
   ) {
-    await this.cacheManager.del(`downloads:${request.user.userId}`)
+    await this.cacheManager.del(`downloads:${request.user.userId}`);
     return this.pexlesService.removeDownloadImage(
       request.user.userId,
       dto.wallpaperId,
@@ -98,16 +101,39 @@ export class WallpapersController {
     );
   }
 
-  @Post("upload")
-  @UseInterceptors(FileInterceptor("image"))
+  @Post('upload')
+  @Throttle({
+    default:{
+      limit:1,
+      ttl:60000
+    }
+  })
+  @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('image',{
+    limits:{
+      fileSize: 5*1024*1024
+    }
+  }))
   async uploadWallpaper(
-    @UploadedFile() image:Express.Multer.File,
-    @Body() uploadDto:UploadDto,
-    @Req() request:Request
-  ){
-    console.log("Reached uploadWallpaper function")
-    console.log(image)
-    console.log(uploadDto)
-    return this.pexlesService.uploadWallpaper(image,uploadDto,request.user.userId)
+    @UploadedFile() image: Express.Multer.File,
+    @Body() uploadDto: UploadDto,
+    @Req() req: Request,
+  ) {
+    console.log('UPLOAD CONTROLLER HIT');
+    console.log('IMAGE:', image);
+    console.log('BODY:', uploadDto);
+    console.log('USER:', req.user);
+
+    return this.pexlesService.uploadWallpaper(
+      image,
+      uploadDto,
+      req.user.userId,
+    );
   }
+
+  @Get("uploaded")
+  async getAllUploadedWallpapers(){
+    return this.pexlesService.getAllUploadedWallpapers()
+  }
+
 }

@@ -79,4 +79,13 @@ export class AdminService {
 
     return res;
   }
+
+  async getAllUploadedWallpapers(){
+    const res = await this.prisma.uploadedWallpapers.findMany({
+      select:{
+        imageUrl:true
+      }
+    })
+    return res
+  }
 }

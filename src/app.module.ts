@@ -10,6 +10,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { AiModule } from './ai/ai.module';
 import { AdminModule } from './admin/admin.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PrismaModule } from './prisma/prisma.module';
     UserModule,
     AiModule,
     AdminModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [

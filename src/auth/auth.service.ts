@@ -20,7 +20,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async registerUser(registerDto: RegisterDto) {
@@ -30,6 +30,16 @@ export class AuthService {
         email,
       },
     });
+
+    const existingName = await this.prisma.user.findUnique({
+      where: {
+        name: name,
+      },
+    });
+
+    if (existingName) {
+      throw new BadRequestException('User name already exists');
+    }
 
     if (exists) {
       throw new BadRequestException('Email already exists');
@@ -45,7 +55,7 @@ export class AuthService {
       },
     });
 
-    console.log("From register",user);
+    console.log('From register', user);
 
     return {
       message: 'Registered successfully',
@@ -69,7 +79,7 @@ export class AuthService {
 
     const payload: JwtPaylod = {
       userId: user.id,
-      role:user.role
+      role: user.role,
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
@@ -89,7 +99,7 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
-        role:user.role
+        role: user.role,
       },
     };
   }
@@ -107,7 +117,7 @@ export class AuthService {
       const newAccessToken = await this.jwtService.signAsync(
         {
           userId: payload.userId,
-          role:payload.role,
+          role: payload.role,
         },
         {
           secret: process.env.JWT_SECRET,
@@ -123,38 +133,38 @@ export class AuthService {
     }
   }
 
-  async changePassword(userId:number, changePasswordDto:ChangePasswordDto){
-    const{currentPassword, newPassword} = changePasswordDto
+  async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
+    const { currentPassword, newPassword } = changePasswordDto;
     const user = await this.prisma.user.findUnique({
-      where:{
-        id:userId
-      }
-    })
+      where: {
+        id: userId,
+      },
+    });
 
-    if(!user){
-      throw new NotFoundException("User not found")
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password)
-    if(!isMatch){
-      throw new BadRequestException("Invalid current password")
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Invalid current password');
     }
 
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10)
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
     const updatedPassword = await this.prisma.user.update({
-      where:{
-        id:userId
+      where: {
+        id: userId,
       },
-      data:{
-        password:hashedNewPassword
-      }
-    })
+      data: {
+        password: hashedNewPassword,
+      },
+    });
 
-    await this.cacheManager.del(`profile:${userId}`)
+    await this.cacheManager.del(`profile:${userId}`);
 
-    return{
-      message:"Password changed successfully"
-    }
+    return {
+      message: 'Password changed successfully',
+    };
   }
 }

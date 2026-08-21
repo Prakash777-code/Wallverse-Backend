@@ -13,15 +13,16 @@ export class AiService {
   ) {}
 
   async generateImage(prompt: PromptDto, userId: number) {
+    await this.cacheManager.del(`profile:${userId}`);
     const PLAN_LIMITS = {
       FREE: 5,
       PRO: 20,
       PREMIUM: 50,
     };
 
-    const key = `prompt:${prompt.prompt.toLowerCase()}`;
+    const key = `prompt:${userId}:${prompt.prompt.toLowerCase()}`;
 
-    const cachedData = await this.cacheManager.get<string>(key);
+    const cachedData = await this.cacheManager.get(key);
 
     if (cachedData) {
       return {
@@ -36,7 +37,7 @@ export class AiService {
       },
       select: {
         plan: true,
-        role:true
+        role: true,
       },
     });
 
@@ -57,7 +58,7 @@ export class AiService {
       },
     });
 
-    if (generationCount >= limit && user.role !== "ADMIN") {
+    if (generationCount >= limit && user.role !== 'ADMIN') {
       throw new HttpException(
         {
           message: `You have reached your ${user.plan} AI generation limit`,
@@ -72,6 +73,8 @@ export class AiService {
       prompt.prompt,
     )}?model=flux&width=1920&height=1080&enhance=true&nologo=true`;
 
+    
+
     await this.prisma.aiGenerated.create({
       data: {
         userId,
@@ -80,7 +83,9 @@ export class AiService {
       },
     });
 
-    await this.cacheManager.set(key, imageUrl, 24 * 60 * 60 * 1000);
+
+    await this.cacheManager.set(key, imageUrl, 5 * 60 * 1000);
+    
 
     return {
       source: 'Api',

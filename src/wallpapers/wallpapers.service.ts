@@ -1,15 +1,23 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PexelsQueryDto } from './dto/pexels.quer.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadDto } from './dto/upload.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { createHash } from 'node:crypto';
 
 @Injectable()
 export class WallpaperService {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private prisma: PrismaService,
+    private cloudinaryService: CloudinaryService,
   ) {}
   async getWallpapers(pexelsQueryDto: PexelsQueryDto) {
     const { query, page = 1, perPage = 16 } = pexelsQueryDto;
@@ -123,15 +131,70 @@ export class WallpaperService {
   }
 
   async uploadWallpaper(
-    image:Express.Multer.File,
-    uploadDto:UploadDto,
-    userId:number
-  ){
-    return{
-      message:"Wallpaper recieved",
-      filename:image.originalname,
-      size:image.size,
-      title:uploadDto.title,
+    image: Express.Multer.File,
+    uploadDto: UploadDto,
+    userId: number,
+  ) {
+    const imageHash = createHash('sha256').update(image.buffer).digest('hex');
+    const exisiting = await this.prisma.uploadedWallpapers.findUnique({
+      where: {
+        imageHash,
+      },
+    });
+    if (exisiting) {
+      throw new ConflictException('This wallpaper has already been uploaded');
     }
+    const res = await this.cloudinaryService.uploadWallpaper(image);
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        name: true,
+      },
+    });
+    await this.prisma.uploadedWallpapers.create({
+      data: {
+        userId: userId,
+        title: uploadDto.title,
+        imageUrl: res.secure_url,
+        userName: user!.name,
+        imageHash: imageHash,
+      },
+    });
+    await this.cacheManager.del(`profile:${userId}`);
+    await this.cacheManager.del(`uploaded`);
+    await this.cacheManager.del(`uploads${userId}`);
+    console.log(res.secure_url);
+    return {
+      message: 'Wallpaper uploaded successfully',
+      title: uploadDto.title,
+      imageUrl: res.secure_url,
+    };
+  }
+
+  async getAllUploadedWallpapers() {
+    const key = `uploaded`;
+    const cachedData = await this.cacheManager.get(key);
+    if (cachedData) {
+      return {
+        source: 'Cache',
+        data: cachedData,
+      };
+    }
+    const res = await this.prisma.uploadedWallpapers.findMany({
+      select: {
+        id: true,
+        imageUrl: true,
+        userName: true,
+      },
+    });
+
+    await this.cacheManager.set(key, res);
+
+    return {
+      source: 'Database',
+      data: res,
+    };
   }
 }
