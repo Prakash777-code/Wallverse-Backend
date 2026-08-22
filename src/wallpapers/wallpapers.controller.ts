@@ -27,7 +27,6 @@ import { DeleteDownloadDto } from './dto/deleteDownload.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadDto } from './dto/upload.dto';
 import type {} from 'multer';
-import { request } from 'axios';
 
 @Controller('pexels')
 export class WallpapersController {
@@ -37,6 +36,7 @@ export class WallpapersController {
   ) {}
 
   @Get()
+  @SkipThrottle()
   async getWallpapers(@Query() pexelsQueryDto: PexelsQueryDto) {
     return this.pexlesService.getWallpapers(pexelsQueryDto);
   }
@@ -103,17 +103,20 @@ export class WallpapersController {
 
   @Post('upload')
   @Throttle({
-    default:{
-      limit:1,
-      ttl:60000
-    }
+    default: {
+      limit: 1,
+      ttl: 60000,
+    },
   })
   @UseGuards(AuthGuard)
-  @UseInterceptors(FileInterceptor('image',{
-    limits:{
-      fileSize: 5*1024*1024
-    }
-  }))
+  @SkipThrottle()
+  @UseInterceptors(
+    FileInterceptor('image', {
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+      },
+    }),
+  )
   async uploadWallpaper(
     @UploadedFile() image: Express.Multer.File,
     @Body() uploadDto: UploadDto,
@@ -131,9 +134,21 @@ export class WallpapersController {
     );
   }
 
-  @Get("uploaded")
-  async getAllUploadedWallpapers(){
-    return this.pexlesService.getAllUploadedWallpapers()
+  @Get('uploaded')
+  @UseGuards(AuthGuard)
+  async getAllUploadedWallpapers() {
+    return this.pexlesService.getAllUploadedWallpapers();
   }
 
+  @Delete('upload/:id')
+  @UseGuards(AuthGuard)
+  async deleteUpload(
+    @Param('id', ParseIntPipe) wallpaperId: number,
+    @Req() request: Request,
+  ) {
+    console.log('Reached delete function');
+    console.log('WallpaperId: ', wallpaperId);
+    console.log('UserId: ', request.user.userId);
+    return this.pexlesService.deleteUpload(request.user.userId, wallpaperId);
+  }
 }

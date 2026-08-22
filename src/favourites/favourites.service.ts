@@ -40,7 +40,7 @@ export class FavouritesService {
         },
       };
     } catch (error) {
-      throw new ConflictException('Wallpaper is already in your favourites');
+      throw new Error('Something went wrong');
     }
   }
 

@@ -46,6 +46,7 @@ export class UserController {
   }
 
   @Get('uploads/:id')
+  @UseGuards(AuthGuard)
   async getUploadedWallpaperByUserId(
     @Param('id', ParseIntPipe) userId: number,
   ) {

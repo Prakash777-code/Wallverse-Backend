@@ -111,7 +111,9 @@ export class UserService {
         userId: userId,
       },
       select: {
+        id:true,
         userId: true,
+        userName:true,
         imageUrl: true,
       },
     });

@@ -75,6 +75,7 @@ model UploadedWallpapers{
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
+  @@unique([id, userId])
 }
 
 enum Role {

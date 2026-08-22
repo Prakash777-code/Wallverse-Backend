@@ -3,7 +3,7 @@ import { RegisterDto } from './dto/register.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import type { Request, Response } from 'express';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { ChangePasswordDto } from './dto/changePassword.dto';
 import { AuthGuard } from './auth.guard';
 
@@ -50,12 +50,7 @@ export class AuthController {
   }
 
   @Post('refresh')
-  @Throttle({
-    default:{
-      limit:3,
-      ttl:60000
-    }
-  })
+  @SkipThrottle()
   async refreshAccessToken(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,

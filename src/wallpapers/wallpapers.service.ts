@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -184,6 +185,7 @@ export class WallpaperService {
     }
     const res = await this.prisma.uploadedWallpapers.findMany({
       select: {
+        userId: true,
         id: true,
         imageUrl: true,
         userName: true,
@@ -195,6 +197,46 @@ export class WallpaperService {
     return {
       source: 'Database',
       data: res,
+    };
+  }
+
+  async deleteUpload(userId: number, wallpaperId: number) {
+    
+    const upload = await this.prisma.uploadedWallpapers.findUnique({
+      where: {
+        id: wallpaperId,
+      },
+    });
+
+    console.log('Upload:', upload);
+    console.log('Requested userId:', userId);
+    console.log('Requested wallpaperId:', wallpaperId);
+
+    const hasUpload = await this.prisma.uploadedWallpapers.findFirst({
+      where: {
+        userId: userId,
+        id: wallpaperId,
+      },
+    });
+
+    console.log(hasUpload);
+
+    if (!hasUpload) {
+      throw new NotFoundException('Post not found');
+    }
+    const res = await this.prisma.uploadedWallpapers.deleteMany({
+      where: {
+        id: wallpaperId,
+        userId: userId,
+      },
+    });
+    await this.cacheManager.del(`uploads${userId}`)
+    await this.cacheManager.del(`uploaded`)
+
+    await this.cacheManager.del(`profile:${userId}`);
+
+    return {
+      message: 'Upload deleted successfully',
     };
   }
 }

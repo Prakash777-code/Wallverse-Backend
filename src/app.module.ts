@@ -11,6 +11,7 @@ import { AiModule } from './ai/ai.module';
 import { AdminModule } from './admin/admin.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     AuthModule,
     FavouritesModule,
     WallpapersModule,
-    CacheModule.register({isGlobal:true, ttl:30*60*1000}),
+    CacheModule.register({ isGlobal: true, ttl: 30 * 60 * 1000 }),
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -35,6 +36,11 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
   controllers: [AppController],
   providers: [
     AppService,
+
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
