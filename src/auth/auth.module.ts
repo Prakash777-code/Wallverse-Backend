@@ -4,14 +4,15 @@ import { AuthService } from './auth.service';
 import {PrismaModule} from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from './auth.guard';
-import { CACHE_MANAGER, CacheModule } from '@nestjs/cache-manager';
+import {  CacheModule } from '@nestjs/cache-manager';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService,AuthGuard],
-  imports:[PrismaModule,JwtModule.register({
+  imports:[PrismaModule,PassportModule,JwtModule.register({
       secret: process.env.JWT_SECRET,
     }),CacheModule.register()],
-    exports:[JwtModule,AuthGuard]
+    exports:[JwtModule,AuthGuard,AuthService]
 })
 export class AuthModule {}

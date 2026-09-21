@@ -167,4 +167,46 @@ export class AuthService {
       message: 'Password changed successfully',
     };
   }
+
+   async mobileLogin(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    const payload: JwtPaylod = {
+      userId: user.id,
+      role: user.role,
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: process.env.JWT_SECRET,
+      expiresIn: '5m',
+    });
+
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: '7d',
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    };
+  }
 }

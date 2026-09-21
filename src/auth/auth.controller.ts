@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Put,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -18,10 +26,10 @@ export class AuthController {
 
   @Post('login')
   @Throttle({
-    default:{
-      limit:5,
-      ttl:60000
-    }
+    default: {
+      limit: 5,
+      ttl: 60000,
+    },
   })
   async login(
     @Body() loginDto: LoginDto,
@@ -63,7 +71,7 @@ export class AuthController {
       secure: true,
       sameSite: 'none',
       maxAge: 60 * 5 * 1000,
-      path:"/"
+      path: '/',
     });
 
     return {
@@ -78,30 +86,48 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      path:"/"
+      path: '/',
     });
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      path:"/"
+      path: '/',
     });
-    console.log("User logged out")
+    console.log('User logged out');
     return {
       message: 'Logged out successfully',
     };
   }
 
-  @Put("password")
+  @Put('password')
   @UseGuards(AuthGuard)
   @Throttle({
-    default:{
-      limit:2,
-      ttl:60000
-    }
+    default: {
+      limit: 2,
+      ttl: 60000,
+    },
   })
-  async changePassowrd(@Req() request:Request, @Body() changePasswordDto:ChangePasswordDto){
-    return this.authService.changePassword(request.user.userId, changePasswordDto)
+  async changePassowrd(
+    @Req() request: Request,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(
+      request.user.userId,
+      changePasswordDto,
+    );
+  }
+
+  @Post('mobile/login')
+  async mobileLogin(@Body() loginDto: LoginDto) {
+    const res = await this.authService.login(loginDto);
+    const accessToken = res.accessToken;
+    const refreshToken = res.refreshToken;
+    return {
+      success: true,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    };
   }
 }

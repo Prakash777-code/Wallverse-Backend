@@ -12,6 +12,7 @@ import { AdminModule } from './admin/admin.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { APP_GUARD } from '@nestjs/core';
+import { MobileModule } from './mobile/mobile.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { APP_GUARD } from '@nestjs/core';
     AiModule,
     AdminModule,
     CloudinaryModule,
+    MobileModule,
   ],
   controllers: [AppController],
   providers: [
