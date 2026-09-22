@@ -19,6 +19,7 @@ model User {
   favourites  Favourites[]
   downloads   WallpaperDownload[]
   uploadedWallpapers UploadedWallpapers[]
+  likes Likes[]
 }
 
 model Favourites {
@@ -73,9 +74,20 @@ model UploadedWallpapers{
   imageHash String   @unique
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+  likes Likes[]
 
   @@index([userId])
   @@unique([id, userId])
+}
+
+model Likes{
+  id Int @id @default(autoincrement())
+  userId Int
+  postId Int
+  created_at DateTime @default(now())
+  user User @relation(fields:[userId],references:[id], onDelete:Cascade)
+  uploads UploadedWallpapers @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@unique([userId,postId])
 }
 
 enum Role {

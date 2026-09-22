@@ -150,7 +150,7 @@ export class MobileWallpaperService {
     };
   }
 
-  async getCommunityWallpapers(page: number, limit: number) {
+  async getCommunityWallpapers(page: number, limit: number, userId: number) {
     const totalPosts = await this.prisma.uploadedWallpapers.count();
     const skip = (page - 1) * limit;
     const res = await this.prisma.uploadedWallpapers.findMany({
@@ -164,10 +164,44 @@ export class MobileWallpaperService {
         id: true,
         imageUrl: true,
         userName: true,
+        _count: {
+          select: {
+            likes: true,
+          },
+        },
       },
     });
+    const posts = await Promise.all(
+      res.map(async (post) => {
+        const isLiked = await this.prisma.likes.findUnique({
+          where: {
+            userId_postId: {
+              userId: userId,
+              postId: post.id,
+            },
+          },
+        });
+        const isFavourite = await this.prisma.favourites.findUnique({
+          where: {
+            userId_wallpaperId: {
+              userId: userId,
+              wallpaperId: post.id,
+            },
+          },
+        });
+        return {
+          id: post.id,
+          userId: post.userId,
+          userName: post.userName,
+          imageUrl: post.imageUrl,
+          likes: post._count.likes,
+          isLiked: isLiked != null,
+          isFavourite: isFavourite != null,
+        };
+      }),
+    );
     return {
-      data: res,
+      data: posts,
       totalPosts: totalPosts,
     };
   }
@@ -314,6 +348,70 @@ export class MobileWallpaperService {
     await this.cacheManager.del(`profile:${userId}`);
     return {
       message: 'Post deleted',
+    };
+  }
+
+  async likePost(postId: number, userId: number) {
+    const exists = await this.prisma.uploadedWallpapers.findUnique({
+      where: {
+        id: postId,
+      },
+    });
+    if (!exists) {
+      throw new NotFoundException('Post not found');
+    }
+    const alreadyLiked = await this.prisma.likes.findUnique({
+      where: {
+        userId_postId: {
+          userId: userId,
+          postId: postId,
+        },
+      },
+    });
+    if (alreadyLiked) {
+      throw new ConflictException('Post already liked');
+    }
+    await this.prisma.likes.create({
+      data: {
+        userId: userId,
+        postId: postId,
+      },
+    });
+    return {
+      message: 'Post liked',
+    };
+  }
+
+  async unlikePost(postId: number, userId: number) {
+    const isPost = await this.prisma.uploadedWallpapers.findUnique({
+      where: {
+        id: postId,
+      },
+    });
+    if (!isPost) {
+      throw new NotFoundException('Post not found');
+    }
+    const isLiked = await this.prisma.likes.findUnique({
+      where: {
+        userId_postId: {
+          userId: userId,
+          postId: postId,
+        },
+      },
+    });
+    if (!isLiked) {
+      throw new BadRequestException('This post is not liked');
+    }
+    await this.prisma.likes.delete({
+      where: {
+        userId_postId: {
+          userId: userId,
+          postId: postId,
+        },
+      },
+    });
+    return {
+      message: 'Post unliked',
     };
   }
 }

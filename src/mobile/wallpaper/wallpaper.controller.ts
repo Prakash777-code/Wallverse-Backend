@@ -72,10 +72,12 @@ export class MobileWallpaperController {
   async getCommunityWallpapers(
     @Query('page') page: string,
     @Query('limit') limit: string,
+    @Req() request: AuthRequest,
   ) {
     return this.wallpaperService.getCommunityWallpapers(
       Number(page),
       Number(limit),
+      request.user.userId,
     );
   }
 
@@ -125,5 +127,23 @@ export class MobileWallpaperController {
     @Param('id', ParseIntPipe) postId: number,
   ) {
     return this.wallpaperService.deletePost(request.user.userId, postId);
+  }
+
+  @Post('like/:id')
+  @SkipThrottle()
+  async likePost(
+    @Req() requets: AuthRequest,
+    @Param('id', ParseIntPipe) postId: number,
+  ) {
+    return this.wallpaperService.likePost(postId, requets.user.userId);
+  }
+
+  @Post('unlike/:id')
+  @SkipThrottle()
+  async unlikePost(
+    @Req() requets: AuthRequest,
+    @Param('id', ParseIntPipe) postId: number,
+  ) {
+    return this.wallpaperService.unlikePost(postId, requets.user.userId);
   }
 }
