@@ -1,98 +1,437 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# WallVerse Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend API for **WallVerse**, a full-stack wallpaper platform with Flutter mobile and Next.js web applications.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Built with **NestJS, TypeScript, PostgreSQL, and Prisma**, the backend handles authentication, wallpapers, favourites, likes, community uploads, AI wallpaper generation, media storage, pagination, rate limiting, and client-specific API endpoints.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🚀 Features
 
-## Project setup
+* 🔐 JWT authentication with access and refresh tokens
+* 🖼️ Wallpaper search and browsing using the Pexels API
+* 📱 Dedicated mobile API endpoints
+* ❤️ Wallpaper likes
+* 🔖 User favourites
+* 👥 Community wallpaper uploads
+* 🗑️ Delete uploaded wallpapers
+* 👤 User profiles and personalized data
+* ☁️ Cloudinary image storage
+* 🔍 SHA-256 image hashing for duplicate upload prevention
+* 🤖 AI wallpaper generation using the Pollinations API
+* 📄 Pagination
+* 🛡️ API rate limiting / throttling
+* 📚 Swagger / OpenAPI documentation
+* 🗄️ PostgreSQL database with Prisma ORM
 
-```bash
-$ npm install
-```
+---
 
-## Compile and run the project
+## 🏗️ Architecture
 
-```bash
-# development
-$ npm run start
+Flutter Mobile App ───────┐
+                          │
+                          ▼
+                    NestJS REST API
+                          │
+          ┌───────────────┼────────────────┐
+          │               │                │
+       Auth &          Services &       Controllers
+       Users           Business Logic       │
+          │               │                 │
+          └───────────────┼─────────────────┘
+                          │
+                       Prisma
+                          │
+                          ▼
+                    PostgreSQL
 
-# watch mode
-$ npm run start:dev
+External Services:
+├── Pexels API
+├── Cloudinary
+└── Pollinations API
 
-# production mode
-$ npm run start:prod
-```
 
-## Run tests
+## 📱 Mobile API
 
-```bash
-# unit tests
-$ npm run test
+The backend provides a dedicated set of **mobile-specific endpoints** under the `/mobile` route prefix.
 
-# e2e tests
-$ npm run test:e2e
+These endpoints are designed specifically for the Flutter application and keep mobile client operations separated from the general API structure.
 
-# test coverage
-$ npm run test:cov
-```
+Examples include:
 
-## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+/mobile/wallpaper
+/mobile/community
+/mobile/favourite
+/mobile/wallpaper/generate
+/mobile/...
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+This separation allows the mobile application to use client-specific endpoints and response handling without tightly coupling the Flutter app to the web API structure.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## 🔐 Authentication
 
-Check out a few resources that may come in handy when working with NestJS:
+WallVerse uses JWT-based authentication with access and refresh tokens.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Authentication flow
 
-## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Login / Register
+       ↓
+Backend validates credentials
+       ↓
+Access + Refresh Tokens
+       ↓
+Mobile/Web stores tokens
+       ↓
+Access token used for API requests
+       ↓
+Access token expires
+       ↓
+Refresh endpoint
+       ↓
+New access token
 
-## Stay in touch
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Protected endpoints use authenticated user information to provide personalized data such as favourites, likes, uploads, and profile information.
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## 🖼️ Wallpaper System
+
+The backend integrates the **Pexels API** for wallpaper discovery.
+
+Supported functionality includes:
+
+* Search wallpapers
+* Paginated results
+* Wallpaper metadata
+* User-specific favourite state
+* Mobile-specific wallpaper endpoints
+
+The backend also processes wallpaper-related requests for both the Flutter mobile application and Next.js web application.
+
+---
+
+## 👥 Community System
+
+Authenticated users can contribute wallpapers to the WallVerse community.
+
+Features include:
+
+* Upload wallpapers
+* Store images using Cloudinary
+* Like community wallpapers
+* Favourite community wallpapers
+* Delete owned uploads
+* View community wallpapers
+* User-specific `isLiked` and `isFavourite` states
+* User profile information
+
+Example community response data:
+
+
+{
+  "id": 12,
+  "userId": 6,
+  "userName": "User",
+  "imageUrl": "...",
+  "likes": 10,
+  "isLiked": true,
+  "isFavourite": false
+}
+
+## 🔍 Duplicate Upload Prevention
+
+WallVerse uses **SHA-256 hashing** to prevent duplicate image uploads.
+
+
+Image Upload
+     ↓
+Generate SHA-256 hash
+     ↓
+Check existing imageHash
+     ↓
+Already exists?
+   ↙        ↘
+ YES        NO
+  ↓          ↓
+409       Continue
+Conflict    Upload
+
+
+The generated hash is stored in the database with the uploaded wallpaper.
+
+This prevents the same image from being uploaded multiple times.
+
+---
+
+## ❤️ Like System
+
+Likes are stored as relationships between users and wallpapers.
+
+The database uses a composite unique constraint:
+
+
+@@unique([userId, postId])
+
+
+This prevents duplicate likes for the same user and wallpaper, including duplicate records caused by concurrent requests.
+
+---
+
+## 🤖 AI Wallpaper Generation
+
+WallVerse integrates the **Pollinations API** for prompt-based AI wallpaper generation.
+
+Users can provide a prompt and request an AI-generated wallpaper.
+
+The platform also supports plan-based generation limits.
+
+
+FREE
+PRO
+PREMIUM
+
+
+The generated image is returned through the backend to the client application.
+
+---
+
+## ☁️ Media Storage
+
+Uploaded community wallpapers are stored using **Cloudinary**.
+
+
+Client
+  ↓
+NestJS Backend
+  ↓
+Validate Upload
+  ↓
+Generate SHA-256 Hash
+  ↓
+Check Duplicate
+  ↓
+Cloudinary
+  ↓
+Store Image URL + Metadata
+  ↓
+PostgreSQL
+
+
+---
+
+## 📄 Pagination
+
+Wallpaper and community APIs support pagination to avoid loading large datasets in a single request.
+
+Typical request parameters include:
+
+?page=1&perPage=16
+
+Pagination is used across the mobile and web clients where applicable.
+
+---
+
+## 🛡️ Rate Limiting
+
+The backend uses request throttling to help protect API endpoints from excessive requests.
+
+This provides an additional layer of protection for authentication and other API operations.
+
+---
+
+## ⚠️ Error Handling
+
+The API uses appropriate HTTP status codes for different failure scenarios.
+
+| Status | Meaning               |
+| ------ | --------------------- |
+| `400`  | Bad Request           |
+| `401`  | Unauthorized          |
+| `404`  | Resource Not Found    |
+| `409`  | Conflict / Duplicate  |
+| `429`  | Too Many Requests     |
+| `500`  | Internal Server Error |
+
+For example, attempting to upload an image that already exists can result in a `409 Conflict`.
+
+---
+
+## 📚 API Documentation
+
+Swagger / OpenAPI documentation is available through the backend API.
+
+When running locally:
+
+
+http://localhost:3001/api
+
+
+---
+
+## 🗄️ Database
+
+The project uses:
+
+* PostgreSQL
+* Prisma ORM
+
+The database manages entities such as:
+
+* Users
+* Uploaded wallpapers
+* Likes
+* Favourites
+* Authentication-related data
+
+Relationships are enforced using Prisma schema constraints and database-level uniqueness where required.
+
+---
+
+## 🔗 API Integrations
+
+### Pexels
+
+Used for wallpaper discovery and search.
+
+### Cloudinary
+
+Used for storing community-uploaded wallpaper images.
+
+### Pollinations
+
+Used for AI-generated wallpapers from user prompts.
+
+---
+
+## 🛠️ Tech Stack
+
+| Technology       | Purpose              |
+| ---------------- | -------------------- |
+| NestJS           | Backend framework    |
+| TypeScript       | Programming language |
+| Prisma           | ORM                  |
+| PostgreSQL       | Database             |
+| JWT              | Authentication       |
+| Cloudinary       | Image storage        |
+| Pexels API       | Wallpaper discovery  |
+| Pollinations API | AI image generation  |
+| Swagger          | API documentation    |
+| Render           | Backend deployment   |
+
+---
+
+## 📁 Project Structure
+
+src/
+├── auth/
+├── users/
+├── wallpaper/
+├── favourites/
+├── likes/
+├── community/
+├── ai/
+└── ...
+
+
+The backend is organized into feature-based modules to keep authentication, wallpaper operations, community functionality, and other business logic separated.
+
+---
+
+## ⚙️ Getting Started
+
+### 1. Clone the repository
+
+
+git clone https://github.com/Prakash777-code/WallVerse-Backend.git
+cd WallVerse-Backend
+
+
+### 2. Install dependencies
+
+
+npm install
+
+
+### 3. Configure environment variables
+
+Create a `.env` file with the required database, authentication, Cloudinary, and external API configuration.
+
+Example:
+
+
+DATABASE_URL=your_database_url
+
+JWT_ACCESS_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+PEXELS_API_KEY=your_pexels_key
+
+
+### 4. Generate Prisma Client
+
+
+npx prisma generate
+
+
+### 5. Run the development server
+
+
+npm run start:dev
+
+
+The API will run on:
+
+
+http://localhost:3001
+
+
+---
+
+## 🔗 Related Repositories
+
+### Flutter Mobile App
+
+https://github.com/Prakash777-code/WallverseApp
+
+### Next.js Web App
+
+https://github.com/Prakash777-code/Wallpaper
+
+### Live Web Application
+
+https://wallverse-eight.vercel.app/
+
+---
+
+## 📖 What I Learned
+
+Building the WallVerse backend helped me gain practical experience with:
+
+* Designing REST APIs with NestJS
+* JWT authentication and refresh-token flows
+* Prisma and PostgreSQL relationships
+* Database constraints
+* Pagination
+* File uploads and Cloudinary
+* SHA-256 hashing for duplicate detection
+* Third-party API integration
+* Mobile-specific API design
+* Rate limiting
+* API documentation with Swagger
+* Deploying backend services with Render
+* Connecting multiple clients to a shared backend
+
+---
+
+## 📄 License
+
+This project was built for learning and portfolio purposes.
