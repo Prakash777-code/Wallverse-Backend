@@ -28,8 +28,14 @@ export class MobileWallpaperController {
 
   @Get()
   @SkipThrottle()
-  async getWallpapers(@Query() pexelsQueryDto: MobilePexelsQueryDto) {
-    return this.wallpaperService.getWallpapers(pexelsQueryDto);
+  async getWallpapers(
+    @Query() pexelsQueryDto: MobilePexelsQueryDto,
+    @Req() request: AuthRequest,
+  ) {
+    return this.wallpaperService.getWallpapers(
+      pexelsQueryDto,
+      request.user.userId,
+    );
   }
 
   @Get('favourites')

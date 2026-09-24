@@ -22,18 +22,29 @@ export class MobileWallpaperService {
     private cloudinaryService: CloudinaryService,
   ) {}
 
-  async getWallpapers(pexelsQueryDto: MobilePexelsQueryDto) {
+  async getWallpapers(pexelsQueryDto: MobilePexelsQueryDto, userId: number) {
     const { query, page = 1, perPage = 16 } = pexelsQueryDto;
-    const normalizeQuery = query.toLowerCase().trim();
-    const key = `pexels:${normalizeQuery}:${page}:${perPage}`;
-    const cachedData = await this.cacheManager.get(key);
+    if (!query) {
+      throw new BadRequestException('Query is empty');
+    }
+    if (page < 1 || perPage < 1) {
+      throw new BadRequestException(
+        'Page number and limit must be greater than 0',
+      );
+    }
+    const key = `pexels:user${userId}:query${query}:page${page}:perPage${perPage}`;
+    const cachedData = await this.cacheManager.get<{
+      results: any[];
+      totalResults: number;
+    }>(key);
     if (cachedData) {
       return {
         source: 'Cache',
-        data: cachedData['wallpapers'],
-        totalResults: cachedData['totalResults'],
+        data: cachedData.results,
+        totalResults: cachedData.totalResults,
       };
     }
+    const normalizeQuery = query.toLowerCase().trim();
     const result = await fetch(
       `https://api.pexels.com/v1/search?query=${normalizeQuery}&page=${page}&per_page=${perPage}`,
       {
@@ -54,19 +65,43 @@ export class MobileWallpaperService {
       photographer: photo.photographer,
     }));
 
-    await this.cacheManager.set(key, {
-      wallpapers: wallpapers,
+    const results = await Promise.all(
+      wallpapers.map(async (post) => {
+        const isFavourite = await this.prisma.favourites.findUnique({
+          where: {
+            userId_wallpaperId: {
+              userId: userId,
+              wallpaperId: post.wallpaperId,
+            },
+          },
+        });
+        return {
+          wallpaperId: post.wallpaperId,
+          imageUrl: post.imageUrl,
+          photographer: post.photographer,
+          isFavourite: isFavourite != null,
+        };
+      }),
+    );
+    const cache = {
+      results: results,
       totalResults: totalResults,
-    });
+    };
 
+    await this.cacheManager.set(key, cache);
     return {
-      source: 'Pexels',
-      data: wallpapers,
+      source: 'Database',
+      data: results,
       totalResults: totalResults,
     };
   }
 
   async getFavourites(userId: number, page: number, limit: number) {
+    if (page < 1 || limit < 1) {
+      throw new BadRequestException(
+        'Page number and limit must be greater than 0',
+      );
+    }
     const totalFavourites = await this.prisma.favourites.count({
       where: {
         userId: userId,
@@ -81,7 +116,6 @@ export class MobileWallpaperService {
       },
     });
     return {
-      source: 'Database',
       data: favourites,
       totalFavourites: totalFavourites,
     };
@@ -89,6 +123,11 @@ export class MobileWallpaperService {
 
   async favouriteWallpaper(userId: number, favouriteDto: MobileFavouriteDto) {
     const { wallpaperId, imageUrl, photographer } = favouriteDto;
+    if (!wallpaperId || !imageUrl || !photographer) {
+      throw new BadRequestException(
+        'Wallpaper id, image url and photographer fields are missing',
+      );
+    }
     const alreadyFavourite = await this.prisma.favourites.findUnique({
       where: {
         userId_wallpaperId: {
@@ -109,7 +148,7 @@ export class MobileWallpaperService {
           photographer: photographer,
         },
       });
-      await this.cacheManager.del(`favourites:${userId}`);
+      await this.cacheManager.del(`profile:${userId}`);
       return {
         message: 'Saved to favourites',
         data: {
@@ -124,6 +163,9 @@ export class MobileWallpaperService {
   }
 
   async removeFromFavourites(userId: number, wallpaperId: number) {
+    if (!wallpaperId) {
+      throw new BadRequestException('Wallpaper id is missing');
+    }
     const exists = await this.prisma.favourites.findUnique({
       where: {
         userId_wallpaperId: {
@@ -143,7 +185,6 @@ export class MobileWallpaperService {
         },
       },
     });
-    await this.cacheManager.del(`favourites:${userId}`);
     await this.cacheManager.del(`profile:${userId}`);
     return {
       message: 'Deleted',
@@ -151,6 +192,9 @@ export class MobileWallpaperService {
   }
 
   async getCommunityWallpapers(page: number, limit: number, userId: number) {
+    if (page < 0 || limit < 0) {
+      throw new BadRequestException('Page and limit cant be less than 1');
+    }
     const totalPosts = await this.prisma.uploadedWallpapers.count();
     const skip = (page - 1) * limit;
     const res = await this.prisma.uploadedWallpapers.findMany({
@@ -269,7 +313,6 @@ export class MobileWallpaperService {
         imageHash: imageHash,
       },
     });
-    await this.cacheManager.del(`community`);
     await this.cacheManager.del(`profile:${userId}`);
     return {
       message: 'Wallpaper uploaded',
@@ -280,7 +323,10 @@ export class MobileWallpaperService {
     const key = `profile:${userId}`;
     const cachedData = await this.cacheManager.get(key);
     if (cachedData) {
-      return cachedData;
+      return {
+        source: 'Cache',
+        data: cachedData,
+      };
     }
     const user = await this.prisma.user.findUnique({
       where: {
@@ -318,13 +364,17 @@ export class MobileWallpaperService {
       totalUploads: user._count.uploadedWallpapers,
       uploadedWallpapers: user.uploadedWallpapers,
     };
-
     await this.cacheManager.set(key, profile);
-
-    return profile;
+    return {
+      source: 'Database',
+      data: profile,
+    };
   }
 
   async deletePost(userId: number, postId: number) {
+    if (!postId) {
+      throw new BadRequestException('Post id is missing');
+    }
     const exists = await this.prisma.uploadedWallpapers.findUnique({
       where: {
         id_userId: {
@@ -344,7 +394,6 @@ export class MobileWallpaperService {
         },
       },
     });
-    await this.cacheManager.del(`community`);
     await this.cacheManager.del(`profile:${userId}`);
     return {
       message: 'Post deleted',
@@ -352,6 +401,9 @@ export class MobileWallpaperService {
   }
 
   async likePost(postId: number, userId: number) {
+    if (!postId) {
+      throw new BadRequestException('Post id is missing');
+    }
     const exists = await this.prisma.uploadedWallpapers.findUnique({
       where: {
         id: postId,
@@ -383,6 +435,9 @@ export class MobileWallpaperService {
   }
 
   async unlikePost(postId: number, userId: number) {
+    if (!postId) {
+      throw new BadRequestException('Post id is missing');
+    }
     const isPost = await this.prisma.uploadedWallpapers.findUnique({
       where: {
         id: postId,
