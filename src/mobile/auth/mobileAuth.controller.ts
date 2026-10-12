@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { MobileAuthService } from './mobileAuthService';
 import { MobileRegisterDto } from './dtos/register.sto';
 import { MobileLoginDto } from './dtos/login.dto';
+import { UpdatePasswordDto } from './dtos/update_password.dto';
 
 @Controller('mobile/auth')
 export class MobileAuthController {
@@ -18,7 +19,12 @@ export class MobileAuthController {
   }
 
   @Post('refresh')
-  async refresh(@Body("refreshToken") refreshToken: string) {
+  async refresh(@Body('refreshToken') refreshToken: string) {
     return this.authServie.refreshToken(refreshToken);
+  }
+
+  @Post('update')
+  async updatePassword(@Body() updateDto: UpdatePasswordDto) {
+    return this.authServie.updatePassword(updateDto);
   }
 }

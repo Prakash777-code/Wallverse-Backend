@@ -53,6 +53,12 @@ export class MobileWallpaperController {
   }
 
   @Post('favourite')
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60000,
+    },
+  })
   async favouriteWallpaper(
     @Req() request: AuthRequest,
     @Body() favouriteDto: MobileFavouriteDto,
@@ -64,6 +70,12 @@ export class MobileWallpaperController {
   }
 
   @Delete(':id')
+  @Throttle({
+    default: {
+      limit: 6,
+      ttl: 60000,
+    },
+  })
   async deleteWallpaper(
     @Req() request: AuthRequest,
     @Param('id', ParseIntPipe) wallpaperId: number,
@@ -75,6 +87,7 @@ export class MobileWallpaperController {
   }
 
   @Get('community')
+  @SkipThrottle()
   async getCommunityWallpapers(
     @Query('page') page: string,
     @Query('limit') limit: string,
@@ -88,7 +101,12 @@ export class MobileWallpaperController {
   }
 
   @Post('generate')
-  @SkipThrottle()
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60000,
+    },
+  })
   async generateImage(
     @Req() request: AuthRequest,
     @Body('prompt') prompt: string,
@@ -97,7 +115,12 @@ export class MobileWallpaperController {
   }
 
   @Post('upload')
-  @SkipThrottle()
+  @Throttle({
+    default: {
+      limit: 4,
+      ttl: 60000,
+    },
+  })
   @UseInterceptors(
     FileInterceptor('image', {
       limits: {
@@ -110,11 +133,6 @@ export class MobileWallpaperController {
     @Body() uploadDto: MobileUploadDto,
     @Req() req: AuthRequest,
   ) {
-    console.log('UPLOAD CONTROLLER HIT');
-    console.log('IMAGE:', image);
-    console.log('BODY:', uploadDto);
-    console.log('USER:', req.user);
-
     return this.wallpaperService.uploadWallpaper(
       image,
       uploadDto,
@@ -128,6 +146,12 @@ export class MobileWallpaperController {
   }
 
   @Delete('post/:id')
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60000,
+    },
+  })
   async deletePost(
     @Req() request: AuthRequest,
     @Param('id', ParseIntPipe) postId: number,
@@ -136,7 +160,12 @@ export class MobileWallpaperController {
   }
 
   @Post('like/:id')
-  @SkipThrottle()
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60000,
+    },
+  })
   async likePost(
     @Req() requets: AuthRequest,
     @Param('id', ParseIntPipe) postId: number,
@@ -145,11 +174,29 @@ export class MobileWallpaperController {
   }
 
   @Post('unlike/:id')
-  @SkipThrottle()
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60000,
+    },
+  })
   async unlikePost(
     @Req() requets: AuthRequest,
     @Param('id', ParseIntPipe) postId: number,
   ) {
     return this.wallpaperService.unlikePost(postId, requets.user.userId);
+  }
+
+  @Get('notification')
+  async getUserNotification(
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+    @Req() request: AuthRequest,
+  ) {
+    return this.wallpaperService.getUserNotification(
+      request.user.userId,
+      Number(page),
+      Number(limit),
+    );
   }
 }

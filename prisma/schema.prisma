@@ -8,27 +8,30 @@ datasource db {
 }
 
 model User {
-  id          Int                 @id @default(autoincrement())
-  name        String              @unique
-  email       String              @unique
-  password    String
-  created_at  DateTime            @default(now())
-  role        Role                @default(USER)
-  plan        PLAN                @default(FREE)
-  aiGenerated AiGenerated[]
-  favourites  Favourites[]
-  downloads   WallpaperDownload[]
+  id                 Int                  @id @default(autoincrement())
+  name               String               @unique
+  email              String               @unique
+  password           String
+  created_at         DateTime             @default(now())
+  role               Role                 @default(USER)
+  plan               PLAN                 @default(FREE)
+  passwordVersion    Int                  @default(1)
+  aiGenerated        AiGenerated[]
+  favourites         Favourites[]
+  downloads          WallpaperDownload[]
   uploadedWallpapers UploadedWallpapers[]
-  likes Likes[]
+  notification       Notification[]
+  likes              Likes[]
 }
 
 model Favourites {
-  id           Int    @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   userId       Int
   wallpaperId  BigInt
   imageUrl     String
   photographer String
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  created_at   DateTime @default(now())
 
   @@unique([userId, wallpaperId])
 }
@@ -65,29 +68,45 @@ model AiGenerated {
   @@index([userId])
 }
 
-model UploadedWallpapers{
-  id Int @id @default(autoincrement())
-  userId Int
-  title String
-  imageUrl String
-  userName String
-  imageHash String   @unique
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  likes Likes[]
+model UploadedWallpapers {
+  id           Int            @id @default(autoincrement())
+  userId       Int
+  title        String
+  imageUrl     String
+  userName     String
+  imageHash    String         @unique
+  createdAt    DateTime       @default(now())
+  user         User           @relation(fields: [userId], references: [id])
+  likes        Likes[]
+  notification Notification[]
 
-  @@index([userId])
   @@unique([id, userId])
+  @@index([userId])
 }
 
-model Likes{
-  id Int @id @default(autoincrement())
-  userId Int
-  postId Int
-  created_at DateTime @default(now())
-  user User @relation(fields:[userId],references:[id], onDelete:Cascade)
-  uploads UploadedWallpapers @relation(fields: [postId], references: [id], onDelete: Cascade)
-  @@unique([userId,postId])
+model Likes {
+  id           Int                @id @default(autoincrement())
+  userId       Int
+  postId       Int
+  created_at   DateTime           @default(now())
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  uploads      UploadedWallpapers @relation(fields: [postId], references: [id], onDelete: Cascade)
+  notification Notification[]
+
+  @@unique([userId, postId])
+}
+
+model Notification {
+  id       Int    @id @default(autoincrement())
+  ownerId  Int
+  imageUrl String
+  postId   Int
+  userName String
+  created_at   DateTime           @default(now())
+  user    User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  post    UploadedWallpapers @relation(fields: [postId], references: [id], onDelete: Cascade)
+  likes   Likes?             @relation(fields: [likesId], references: [id])
+  likesId Int?
 }
 
 enum Role {
@@ -95,8 +114,8 @@ enum Role {
   ADMIN
 }
 
-enum PLAN{
+enum PLAN {
   FREE
-  PRO 
+  PRO
   PREMIUM
 }

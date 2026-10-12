@@ -53,7 +53,6 @@ export class MobileWallpaperService {
         },
       },
     );
-
     if (!result.ok) {
       throw new Error('Failed to load wallpapers');
     }
@@ -64,7 +63,6 @@ export class MobileWallpaperService {
       imageUrl: photo.src.portrait,
       photographer: photo.photographer,
     }));
-
     const results = await Promise.all(
       wallpapers.map(async (post) => {
         const isFavourite = await this.prisma.favourites.findUnique({
@@ -87,7 +85,6 @@ export class MobileWallpaperService {
       results: results,
       totalResults: totalResults,
     };
-
     await this.cacheManager.set(key, cache);
     return {
       source: 'Database',
@@ -113,6 +110,9 @@ export class MobileWallpaperService {
       take: limit,
       where: {
         userId: userId,
+      },
+      orderBy: {
+        created_at: 'desc',
       },
     });
     return {
@@ -408,6 +408,10 @@ export class MobileWallpaperService {
       where: {
         id: postId,
       },
+      select: {
+        userId: true,
+        imageUrl: true,
+      },
     });
     if (!exists) {
       throw new NotFoundException('Post not found');
@@ -429,6 +433,29 @@ export class MobileWallpaperService {
         postId: postId,
       },
     });
+    const postOwner = await this.prisma.uploadedWallpapers.findUnique({
+      where: {
+        id: postId,
+      },
+    });
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (userId !== exists.userId) {
+      await this.prisma.notification.create({
+        data: {
+          ownerId: exists.userId,
+          imageUrl: exists.imageUrl,
+          postId: postId,
+          userName: user.name,
+        },
+      });
+    }
     return {
       message: 'Post liked',
     };
@@ -465,8 +492,62 @@ export class MobileWallpaperService {
         },
       },
     });
+    const senderDetails = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!senderDetails) {
+      throw new NotFoundException('Sender not found');
+    }
+    if (userId != isPost.userId) {
+      await this.prisma.notification.deleteMany({
+        where: {
+          ownerId: isPost.userId,
+          postId: postId,
+          userName: senderDetails.name,
+        },
+      });
+    }
     return {
       message: 'Post unliked',
+    };
+  }
+
+  async getUserNotification(userId: number, page: number, limit: number) {
+    if (!page || !limit) {
+      throw new BadRequestException('Page and limit are required');
+    }
+    if (page < 1 || limit < 1) {
+      throw new BadRequestException('Page and limit cannot be less than 1');
+    }
+    const totalNotifications = await this.prisma.notification.count({
+      where: {
+        ownerId: userId,
+      },
+    });
+    const skip = (page - 1) * limit;
+    const res = await this.prisma.notification.findMany({
+      skip: skip,
+      take: limit,
+      where: {
+        ownerId: userId,
+      },
+      select: {
+        id: true,
+        ownerId: true,
+        imageUrl: true,
+        postId: true,
+        userName: true,
+        created_at: true,
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+    return {
+      data: res,
+      totalNotifications: totalNotifications,
     };
   }
 }
