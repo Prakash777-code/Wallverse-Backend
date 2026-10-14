@@ -32,18 +32,6 @@ export class MobileWallpaperService {
         'Page number and limit must be greater than 0',
       );
     }
-    const key = `pexels:user${userId}:query${query}:page${page}:perPage${perPage}`;
-    const cachedData = await this.cacheManager.get<{
-      results: any[];
-      totalResults: number;
-    }>(key);
-    if (cachedData) {
-      return {
-        source: 'Cache',
-        data: cachedData.results,
-        totalResults: cachedData.totalResults,
-      };
-    }
     const normalizeQuery = query.toLowerCase().trim();
     const result = await fetch(
       `https://api.pexels.com/v1/search?query=${normalizeQuery}&page=${page}&per_page=${perPage}`,
@@ -81,13 +69,7 @@ export class MobileWallpaperService {
         };
       }),
     );
-    const cache = {
-      results: results,
-      totalResults: totalResults,
-    };
-    await this.cacheManager.set(key, cache);
     return {
-      source: 'Database',
       data: results,
       totalResults: totalResults,
     };
@@ -104,6 +86,17 @@ export class MobileWallpaperService {
         userId: userId,
       },
     });
+    const version =
+      (await this.cacheManager.get<number>('favourites-cache')) ?? 1;
+    const key = `favourites:userId:${userId}:v${version}:page:${page}:limit:${limit}`;
+    const cachedData = await this.cacheManager.get(key);
+    if (cachedData) {
+      return {
+        source: 'Cache',
+        data: cachedData,
+        totalFavourites: totalFavourites,
+      };
+    }
     const skip = (page - 1) * limit;
     const favourites = await this.prisma.favourites.findMany({
       skip: skip,
@@ -115,7 +108,9 @@ export class MobileWallpaperService {
         created_at: 'desc',
       },
     });
+    await this.cacheManager.set(key, favourites);
     return {
+      source: 'Database',
       data: favourites,
       totalFavourites: totalFavourites,
     };
@@ -125,7 +120,7 @@ export class MobileWallpaperService {
     const { wallpaperId, imageUrl, photographer } = favouriteDto;
     if (!wallpaperId || !imageUrl || !photographer) {
       throw new BadRequestException(
-        'Wallpaper id, image url and photographer fields are missing',
+        'Wallpaper id, image url and photographer fields cannot be empty',
       );
     }
     const alreadyFavourite = await this.prisma.favourites.findUnique({
@@ -149,6 +144,7 @@ export class MobileWallpaperService {
         },
       });
       await this.cacheManager.del(`profile:${userId}`);
+      await this.invalidateFavouritesCache();
       return {
         message: 'Saved to favourites',
         data: {
@@ -186,16 +182,28 @@ export class MobileWallpaperService {
       },
     });
     await this.cacheManager.del(`profile:${userId}`);
+    await this.invalidateFavouritesCache();
     return {
       message: 'Deleted',
     };
   }
 
   async getCommunityWallpapers(page: number, limit: number, userId: number) {
-    if (page < 0 || limit < 0) {
+    if (page < 1 || limit < 1) {
       throw new BadRequestException('Page and limit cant be less than 1');
     }
     const totalPosts = await this.prisma.uploadedWallpapers.count();
+    const version =
+      (await this.cacheManager.get<number>('community-version')) ?? 1;
+    const key = `community:userId:${userId}:v${version}:page:${page}:limit:${limit}`;
+    const cachedData = await this.cacheManager.get(key);
+    if (cachedData) {
+      return {
+        source: 'Cache',
+        data: cachedData,
+        totalPosts: totalPosts,
+      };
+    }
     const skip = (page - 1) * limit;
     const res = await this.prisma.uploadedWallpapers.findMany({
       skip: skip,
@@ -244,7 +252,9 @@ export class MobileWallpaperService {
         };
       }),
     );
+    await this.cacheManager.set(key, posts);
     return {
+      source: 'Database',
       data: posts,
       totalPosts: totalPosts,
     };
@@ -314,6 +324,7 @@ export class MobileWallpaperService {
       },
     });
     await this.cacheManager.del(`profile:${userId}`);
+    await this.invalidateCommunityCache();
     return {
       message: 'Wallpaper uploaded',
     };
@@ -433,6 +444,7 @@ export class MobileWallpaperService {
         postId: postId,
       },
     });
+    await this.invalidateCommunityCache();
     const postOwner = await this.prisma.uploadedWallpapers.findUnique({
       where: {
         id: postId,
@@ -456,6 +468,7 @@ export class MobileWallpaperService {
         },
       });
     }
+    await this.invalidateNotificationCacahe();
     return {
       message: 'Post liked',
     };
@@ -492,6 +505,7 @@ export class MobileWallpaperService {
         },
       },
     });
+    await this.invalidateCommunityCache();
     const senderDetails = await this.prisma.user.findUnique({
       where: {
         id: userId,
@@ -509,6 +523,7 @@ export class MobileWallpaperService {
         },
       });
     }
+    await this.invalidateNotificationCacahe();
     return {
       message: 'Post unliked',
     };
@@ -526,6 +541,17 @@ export class MobileWallpaperService {
         ownerId: userId,
       },
     });
+    const version =
+      (await this.cacheManager.get<number>('notification-cache')) ?? 1;
+    const key = `notification:userId:${userId}:v${version}:page${page}:limit${limit}`;
+    const cachedData = await this.cacheManager.get(key);
+    if (cachedData) {
+      return {
+        source: 'Cache',
+        data: cachedData,
+        totalNotifications: totalNotifications,
+      };
+    }
     const skip = (page - 1) * limit;
     const res = await this.prisma.notification.findMany({
       skip: skip,
@@ -545,9 +571,29 @@ export class MobileWallpaperService {
         created_at: 'desc',
       },
     });
+    await this.cacheManager.set(key, res);
     return {
+      source: 'Database',
       data: res,
       totalNotifications: totalNotifications,
     };
+  }
+
+  async invalidateFavouritesCache() {
+    const version =
+      (await this.cacheManager.get<number>('favourites-cache')) ?? 1;
+    await this.cacheManager.set('favourites-cache', version + 1);
+  }
+
+  async invalidateCommunityCache() {
+    const version =
+      (await this.cacheManager.get<number>('community-version')) ?? 1;
+    await this.cacheManager.set('community-version', version + 1);
+  }
+
+  async invalidateNotificationCacahe() {
+    const version =
+      (await this.cacheManager.get<number>('notification-cache')) ?? 1;
+    await this.cacheManager.set('notification-cache', version + 1);
   }
 }

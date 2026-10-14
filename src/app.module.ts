@@ -8,11 +8,11 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { UserModule } from './user/user.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AiModule } from './ai/ai.module';
-import { AdminModule } from './admin/admin.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { APP_GUARD } from '@nestjs/core';
 import { MobileModule } from './mobile/mobile.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -30,10 +30,11 @@ import { MobileModule } from './mobile/mobile.module';
       ],
     }),
     UserModule,
-    AiModule,
     AdminModule,
+    AiModule,
     CloudinaryModule,
     MobileModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [

@@ -102,6 +102,7 @@ model Notification {
   imageUrl String
   postId   Int
   userName String
+  seen Boolean @default(false)
   created_at   DateTime           @default(now())
   user    User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   post    UploadedWallpapers @relation(fields: [postId], references: [id], onDelete: Cascade)
