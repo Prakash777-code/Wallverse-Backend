@@ -199,4 +199,15 @@ export class MobileWallpaperController {
       Number(limit),
     );
   }
+
+  @Post('favourites/id')
+  async getFavouriteIds(
+    @Req() request: AuthRequest,
+    @Body('ids') wallpaperIds: number[],
+  ) {
+    return this.wallpaperService.getFavouriteIds(
+      request.user.userId,
+      wallpaperIds,
+    );
+  }
 }

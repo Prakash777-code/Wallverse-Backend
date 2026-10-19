@@ -32,18 +32,6 @@ export class MobileWallpaperService {
         'Page number and limit must be greater than 0',
       );
     }
-    const key = `pexels:user${userId}:query${query}:page${page}:perPage${perPage}`;
-    const cachedData = await this.cacheManager.get<{
-      results: any[];
-      totalResults: number;
-    }>(key);
-    if (cachedData) {
-      return {
-        source: 'Cache',
-        data: cachedData.results,
-        totalResults: cachedData.totalResults,
-      };
-    }
     const normalizeQuery = query.toLowerCase().trim();
     const result = await fetch(
       `https://api.pexels.com/v1/search?query=${normalizeQuery}&page=${page}&per_page=${perPage}`,
@@ -58,37 +46,16 @@ export class MobileWallpaperService {
     }
     const data = await result.json();
     const totalResults = data.total_results;
+    const key = `wallpapers:userId:${userId}:page:${page}:limit:${perPage}`;
+
     const wallpapers = data.photos.map((photo: any) => ({
       wallpaperId: photo.id,
       imageUrl: photo.src.portrait,
       photographer: photo.photographer,
     }));
-    const results = await Promise.all(
-      wallpapers.map(async (post) => {
-        const isFavourite = await this.prisma.favourites.findUnique({
-          where: {
-            userId_wallpaperId: {
-              userId: userId,
-              wallpaperId: post.wallpaperId,
-            },
-          },
-        });
-        return {
-          wallpaperId: post.wallpaperId,
-          imageUrl: post.imageUrl,
-          photographer: post.photographer,
-          isFavourite: isFavourite != null,
-        };
-      }),
-    );
-    const cache = {
-      results: results,
-      totalResults: totalResults,
-    };
-    await this.cacheManager.set(key, cache);
     return {
       source: 'Database',
-      data: results,
+      data: wallpapers,
       totalResults: totalResults,
     };
   }
@@ -548,6 +515,23 @@ export class MobileWallpaperService {
     return {
       data: res,
       totalNotifications: totalNotifications,
+    };
+  }
+
+  async getFavouriteIds(userId: number, wallpaperIds: number[]) {
+    const ids = await this.prisma.favourites.findMany({
+      where: {
+        userId: userId,
+        wallpaperId: {
+          in: wallpaperIds.map((id) => BigInt(id)),
+        },
+      },
+      select: {
+        wallpaperId: true,
+      },
+    });
+    return {
+      data: ids.map((id) => Number(id.wallpaperId)),
     };
   }
 }
