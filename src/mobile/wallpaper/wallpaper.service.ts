@@ -71,6 +71,17 @@ export class MobileWallpaperService {
         userId: userId,
       },
     });
+    const version =
+      (await this.cacheManager.get<number>('favourite-cache')) ?? 1;
+    const key = `favourite:v${version}:page:${page}:limit:${limit}`;
+    const cachedData = await this.cacheManager.get(key);
+    if (cachedData) {
+      return {
+        source: 'Cache',
+        data: cachedData,
+        totalFavourites: totalFavourites,
+      };
+    }
     const skip = (page - 1) * limit;
     const favourites = await this.prisma.favourites.findMany({
       skip: skip,
@@ -82,7 +93,9 @@ export class MobileWallpaperService {
         created_at: 'desc',
       },
     });
+    await this.cacheManager.set(key, favourites);
     return {
+      source: 'Database',
       data: favourites,
       totalFavourites: totalFavourites,
     };
@@ -116,6 +129,7 @@ export class MobileWallpaperService {
         },
       });
       await this.cacheManager.del(`profile:${userId}`);
+      await this.invalidateFavouritesCache();
       return {
         message: 'Saved to favourites',
         data: {
@@ -153,6 +167,7 @@ export class MobileWallpaperService {
       },
     });
     await this.cacheManager.del(`profile:${userId}`);
+    await this.invalidateFavouritesCache();
     return {
       message: 'Deleted',
     };
@@ -533,5 +548,11 @@ export class MobileWallpaperService {
     return {
       data: ids.map((id) => Number(id.wallpaperId)),
     };
+  }
+
+  async invalidateFavouritesCache() {
+    const version =
+      (await this.cacheManager.get<number>('favourites-cache')) ?? 1;
+    await this.cacheManager.set('favourite-cache', version + 1);
   }
 }
