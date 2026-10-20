@@ -46,7 +46,7 @@ export class MobileWallpaperService {
     }
     const data = await result.json();
     const totalResults = data.total_results;
-    const key = `wallpapers:userId:${userId}:page:${page}:limit:${perPage}`;
+    const key = `wallpapers:query:${query}:page:${page}:limit:${perPage}`;
     const cachedData = await this.cacheManager.get(key);
     if (cachedData) {
       return {
@@ -232,8 +232,16 @@ export class MobileWallpaperService {
     }
     const cleanPrompt = prompt.trim();
     const imageUrl =
-      `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
-      `?model=flux&width=1080&height=1920&nologo=true`;
+      `https://gen.pollinations.ai/image/${encodeURIComponent(cleanPrompt)}` +
+      `?model=black-forest-labs/flux.1-schnell`;
+    const response = await fetch(imageUrl, {
+      headers: {
+        Authorization: `Bearer ${process.env.POLLINATONS_API_KEY}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Pollinations API error: ${response.status}`);
+    }
     await this.prisma.aiGenerated.create({
       data: {
         userId,
@@ -428,6 +436,7 @@ export class MobileWallpaperService {
       });
     }
     await this.invalidateCommunityCache();
+    await this.invalidateNotificationCache();
     return {
       message: 'Post liked',
     };
@@ -482,6 +491,7 @@ export class MobileWallpaperService {
       });
     }
     await this.invalidateCommunityCache();
+    await this.invalidateNotificationCache();
     return {
       message: 'Post unliked',
     };
@@ -499,6 +509,17 @@ export class MobileWallpaperService {
         ownerId: userId,
       },
     });
+    const version =
+      (await this.cacheManager.get<number>('notification-cache')) ?? 1;
+    const key = `notification:v${version}:userId${userId}:page${page}:limit${limit}`;
+    const cachedData = await this.cacheManager.get(key);
+    if (cachedData) {
+      return {
+        source: 'Cache',
+        data: cachedData,
+        totalNotifications: totalNotifications,
+      };
+    }
     const skip = (page - 1) * limit;
     const res = await this.prisma.notification.findMany({
       skip: skip,
@@ -518,7 +539,9 @@ export class MobileWallpaperService {
         created_at: 'desc',
       },
     });
+    await this.cacheManager.set(key, res);
     return {
+      source: 'Database',
       data: res,
       totalNotifications: totalNotifications,
     };
@@ -568,5 +591,11 @@ export class MobileWallpaperService {
     const version =
       (await this.cacheManager.get<number>('community-cache')) ?? 1;
     await this.cacheManager.set('community-cache', version + 1);
+  }
+
+  async invalidateNotificationCache() {
+    const version =
+      (await this.cacheManager.get<number>('notification-cache')) ?? 1;
+    await this.cacheManager.set('notification-cache', version + 1);
   }
 }
