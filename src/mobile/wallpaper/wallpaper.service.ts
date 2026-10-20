@@ -46,7 +46,7 @@ export class MobileWallpaperService {
     }
     const data = await result.json();
     const totalResults = data.total_results;
-    const key = `wallpapers:userId:${userId}:page:${page}:limit:${perPage}`;
+    const key = `wallpapers:query${query}:userId:${userId}:page:${page}:limit:${perPage}`;
     const cachedData = await this.cacheManager.get(key);
     if (cachedData) {
       return {
