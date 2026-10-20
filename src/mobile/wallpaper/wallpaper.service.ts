@@ -47,12 +47,20 @@ export class MobileWallpaperService {
     const data = await result.json();
     const totalResults = data.total_results;
     const key = `wallpapers:userId:${userId}:page:${page}:limit:${perPage}`;
-
+    const cachedData = await this.cacheManager.get(key);
+    if (cachedData) {
+      return {
+        source: 'Cache',
+        data: cachedData,
+        totalResults: totalResults,
+      };
+    }
     const wallpapers = data.photos.map((photo: any) => ({
       wallpaperId: photo.id,
       imageUrl: photo.src.portrait,
       photographer: photo.photographer,
     }));
+    await this.cacheManager.set(key, wallpapers, 30 * 60 * 1000);
     return {
       source: 'Database',
       data: wallpapers,
@@ -174,10 +182,21 @@ export class MobileWallpaperService {
   }
 
   async getCommunityWallpapers(page: number, limit: number, userId: number) {
-    if (page < 0 || limit < 0) {
+    if (page < 1 || limit < 1) {
       throw new BadRequestException('Page and limit cant be less than 1');
     }
     const totalPosts = await this.prisma.uploadedWallpapers.count();
+    const version =
+      (await this.cacheManager.get<number>('community-cache')) ?? 1;
+    const key = `community:v${version}:page${page}:limit${limit}`;
+    const cachedData = await this.cacheManager.get(key);
+    if (cachedData) {
+      return {
+        source: 'Cache',
+        data: cachedData,
+        totalPosts: totalPosts,
+      };
+    }
     const skip = (page - 1) * limit;
     const res = await this.prisma.uploadedWallpapers.findMany({
       skip: skip,
@@ -197,37 +216,10 @@ export class MobileWallpaperService {
         },
       },
     });
-    const posts = await Promise.all(
-      res.map(async (post) => {
-        const isLiked = await this.prisma.likes.findUnique({
-          where: {
-            userId_postId: {
-              userId: userId,
-              postId: post.id,
-            },
-          },
-        });
-        const isFavourite = await this.prisma.favourites.findUnique({
-          where: {
-            userId_wallpaperId: {
-              userId: userId,
-              wallpaperId: post.id,
-            },
-          },
-        });
-        return {
-          id: post.id,
-          userId: post.userId,
-          userName: post.userName,
-          imageUrl: post.imageUrl,
-          likes: post._count.likes,
-          isLiked: isLiked != null,
-          isFavourite: isFavourite != null,
-        };
-      }),
-    );
+    await this.cacheManager.set(key, res);
     return {
-      data: posts,
+      source: 'Database',
+      data: res,
       totalPosts: totalPosts,
     };
   }
@@ -238,13 +230,10 @@ export class MobileWallpaperService {
         message: 'Prompt is required to generate image',
       };
     }
-
     const cleanPrompt = prompt.trim();
-
     const imageUrl =
       `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
       `?model=flux&width=1080&height=1920&nologo=true`;
-
     await this.prisma.aiGenerated.create({
       data: {
         userId,
@@ -252,7 +241,6 @@ export class MobileWallpaperService {
         imageUrl,
       },
     });
-
     return {
       imageUrl,
     };
@@ -296,6 +284,7 @@ export class MobileWallpaperService {
       },
     });
     await this.cacheManager.del(`profile:${userId}`);
+    await this.invalidateCommunityCache();
     return {
       message: 'Wallpaper uploaded',
     };
@@ -438,6 +427,7 @@ export class MobileWallpaperService {
         },
       });
     }
+    await this.invalidateCommunityCache();
     return {
       message: 'Post liked',
     };
@@ -491,6 +481,7 @@ export class MobileWallpaperService {
         },
       });
     }
+    await this.invalidateCommunityCache();
     return {
       message: 'Post unliked',
     };
@@ -550,9 +541,32 @@ export class MobileWallpaperService {
     };
   }
 
+  async getLikedCommunityWallpaperIds(userId: number, wallpaperIds: number[]) {
+    const ids = await this.prisma.likes.findMany({
+      where: {
+        userId: userId,
+        postId: {
+          in: wallpaperIds.map((id) => id),
+        },
+      },
+      select: {
+        postId: true,
+      },
+    });
+    return {
+      data: ids.map((id) => id.postId),
+    };
+  }
+
   async invalidateFavouritesCache() {
     const version =
-      (await this.cacheManager.get<number>('favourites-cache')) ?? 1;
+      (await this.cacheManager.get<number>('favourite-cache')) ?? 1;
     await this.cacheManager.set('favourite-cache', version + 1);
+  }
+
+  async invalidateCommunityCache() {
+    const version =
+      (await this.cacheManager.get<number>('community-cache')) ?? 1;
+    await this.cacheManager.set('community-cache', version + 1);
   }
 }

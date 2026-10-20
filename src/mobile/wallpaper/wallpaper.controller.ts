@@ -53,12 +53,7 @@ export class MobileWallpaperController {
   }
 
   @Post('favourite')
-  @Throttle({
-    default: {
-      limit: 10,
-      ttl: 60000,
-    },
-  })
+  @SkipThrottle()
   async favouriteWallpaper(
     @Req() request: AuthRequest,
     @Body() favouriteDto: MobileFavouriteDto,
@@ -70,12 +65,7 @@ export class MobileWallpaperController {
   }
 
   @Delete(':id')
-  @Throttle({
-    default: {
-      limit: 6,
-      ttl: 60000,
-    },
-  })
+  @SkipThrottle()
   async deleteWallpaper(
     @Req() request: AuthRequest,
     @Param('id', ParseIntPipe) wallpaperId: number,
@@ -160,12 +150,7 @@ export class MobileWallpaperController {
   }
 
   @Post('like/:id')
-  @Throttle({
-    default: {
-      limit: 10,
-      ttl: 60000,
-    },
-  })
+  @SkipThrottle()
   async likePost(
     @Req() requets: AuthRequest,
     @Param('id', ParseIntPipe) postId: number,
@@ -174,12 +159,7 @@ export class MobileWallpaperController {
   }
 
   @Post('unlike/:id')
-  @Throttle({
-    default: {
-      limit: 10,
-      ttl: 60000,
-    },
-  })
+  @SkipThrottle()
   async unlikePost(
     @Req() requets: AuthRequest,
     @Param('id', ParseIntPipe) postId: number,
@@ -208,6 +188,17 @@ export class MobileWallpaperController {
     return this.wallpaperService.getFavouriteIds(
       request.user.userId,
       wallpaperIds,
+    );
+  }
+
+  @Post('community/:id')
+  async getLikedCommunityWallpaperIds(
+    @Req() request: AuthRequest,
+    @Body('ids') wallpaperId: number[],
+  ) {
+    return this.wallpaperService.getLikedCommunityWallpaperIds(
+      request.user.userId,
+      wallpaperId,
     );
   }
 }
