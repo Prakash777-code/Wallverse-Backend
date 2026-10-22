@@ -48,7 +48,7 @@ export class MobileWallpaperService {
     }
     const data = await result.json();
     const totalResults = data.total_results;
-    const key = `wallpapers:userId:${userId}:page:${page}:limit:${perPage}`;
+    const key = `wallpapers:query${query}:page:${page}:limit:${perPage}`;
     const cachedData = await this.cacheManager.get(key);
     if (cachedData) {
       return {
@@ -238,15 +238,9 @@ export class MobileWallpaperService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    if (user.aiGenerationLimit == 0) {
-      throw new HttpException(
-        'AI generation limit reached. Try again after 24 hours.',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
     if (
       user.firstGeneration &&
-      Date.now() - user.firstGeneration.getTime() >= 24 * 60 * 60 * 1000
+      Date.now() - user.firstGeneration.getTime() >=  24 * 60 * 60 * 1000
     ) {
       await this.prisma.user.updateMany({
         where: {
@@ -257,6 +251,12 @@ export class MobileWallpaperService {
           firstGeneration: null,
         },
       });
+    }
+    if (user.aiGenerationLimit == 0) {
+      throw new HttpException(
+        'AI generation limit reached. Try again after 24 hours.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
     const cleanPrompt = prompt.trim();
     const imageUrl =
