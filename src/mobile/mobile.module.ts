@@ -9,10 +9,11 @@ import { MobileAuthService } from './auth/mobileAuthService';
 import { MobileWallpaperService } from './wallpaper/wallpaper.service';
 import { MobileWallpaperController } from './wallpaper/wallpaper.controller';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { EmailService } from './auth/email.service';
 
 
 @Module({
-  providers: [JwtStrategy,MobileAuthService,MobileWallpaperService],
+  providers: [JwtStrategy,MobileAuthService,MobileWallpaperService,EmailService],
   controllers: [MobileAuthController,MobileWallpaperController],
   imports: [
     PrismaModule,

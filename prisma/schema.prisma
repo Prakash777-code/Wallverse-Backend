@@ -17,6 +17,7 @@ model User {
   plan               PLAN                 @default(FREE)
   passwordVersion    Int                  @default(1)
   aiGenerationLimit  Int                  @default(5)
+  sessionVerison            Int                  @default(1)
   firstGeneration    DateTime?
   aiGenerated        AiGenerated[]
   favourites         Favourites[]
@@ -24,6 +25,7 @@ model User {
   uploadedWallpapers UploadedWallpapers[]
   notification       Notification[]
   likes              Likes[]
+  otp  Otp[]
 }
 
 model Favourites {
@@ -109,6 +111,15 @@ model Notification {
   post       UploadedWallpapers @relation(fields: [postId], references: [id], onDelete: Cascade)
   likes      Likes?             @relation(fields: [likesId], references: [id])
   likesId    Int?
+}
+
+model Otp {
+  id Int @id @default(autoincrement())
+  userId Int 
+  otpHash String
+  expiresAt  DateTime
+  created_at DateTime @default(now())
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum Role {
