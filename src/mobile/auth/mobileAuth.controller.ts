@@ -5,7 +5,7 @@ import { MobileLoginDto } from './dtos/login.dto';
 import { UpdatePasswordDto } from './dtos/update_password.dto';
 import { VerifyOtpDto } from './dtos/verifyOtp.dto';
 import { ResetPasswordDto } from './dtos/resetPassword.do';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller('mobile/auth')
 export class MobileAuthController {
@@ -17,6 +17,7 @@ export class MobileAuthController {
   }
 
   @Post('login')
+  @SkipThrottle()
   async login(@Body() loginDto: MobileLoginDto) {
     return this.authServie.login(loginDto);
   }

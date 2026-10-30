@@ -126,13 +126,14 @@ model Otp {
 
 model Reports {
   id          Int    @id @default(autoincrement())
-  reporterId  Int  @unique
+  reporterId  Int  
   postId      Int
   category    ReportCategory @default(OTHER)
   description String
   status      Status @default(PENDING)
   user       User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
   post UploadedWallpapers @relation(fields: [postId], references:[id], onDelete:Cascade)
+   @@unique([postId, reporterId])
 }
 
 enum ReportCategory {

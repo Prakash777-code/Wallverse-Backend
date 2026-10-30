@@ -15,6 +15,7 @@ import { MobileFavouriteDto } from './dtos/favourite.dto';
 import { createHash } from 'node:crypto';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { MobileUploadDto } from './dtos/upload.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class MobileWallpaperService {
@@ -184,6 +185,9 @@ export class MobileWallpaperService {
   }
 
   async getCommunityWallpapers(page: number, limit: number, userId: number) {
+    if (!page || !limit) {
+      return new BadRequestException('Page and limit cannot be empty');
+    }
     if (page < 1 || limit < 1) {
       throw new BadRequestException('Page and limit cant be less than 1');
     }
@@ -240,7 +244,7 @@ export class MobileWallpaperService {
     }
     if (
       user.firstGeneration &&
-      Date.now() - user.firstGeneration.getTime() >=  24 * 60 * 60 * 1000
+      Date.now() - user.firstGeneration.getTime() >= 24 * 60 * 60 * 1000
     ) {
       await this.prisma.user.updateMany({
         where: {
@@ -456,12 +460,21 @@ export class MobileWallpaperService {
     if (alreadyLiked) {
       throw new ConflictException('Post already liked');
     }
-    await this.prisma.likes.create({
-      data: {
-        userId: userId,
-        postId: postId,
-      },
-    });
+    try {
+      await this.prisma.likes.create({
+        data: {
+          userId: userId,
+          postId: postId,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Post alredy liked');
+      }
+    }
     const postOwner = await this.prisma.uploadedWallpapers.findUnique({
       where: {
         id: postId,
@@ -485,10 +498,16 @@ export class MobileWallpaperService {
         },
       });
     }
+    const likes = await this.prisma.uploadedWallpapers.count({
+      where: {
+        id: postId,
+      },
+    });
     await this.invalidateCommunityCache();
     await this.invalidateNotificationCache();
     return {
       message: 'Post liked',
+      like: likes,
     };
   }
 

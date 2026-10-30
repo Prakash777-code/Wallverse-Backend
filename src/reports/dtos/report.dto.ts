@@ -1,5 +1,5 @@
 import { ReportCategory } from '@prisma/client';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class ReportDto {
   @IsString()
@@ -12,6 +12,6 @@ export class ReportDto {
   category!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   description!: string;
 }
