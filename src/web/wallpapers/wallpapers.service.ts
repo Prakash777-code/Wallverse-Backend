@@ -8,9 +8,9 @@ import {
 import { PexelsQueryDto } from './dto/pexels.quer.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { UploadDto } from './dto/upload.dto';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { createHash } from 'node:crypto';
 
 @Injectable()
@@ -201,7 +201,6 @@ export class WallpaperService {
   }
 
   async deleteUpload(userId: number, wallpaperId: number) {
-    
     const upload = await this.prisma.uploadedWallpapers.findUnique({
       where: {
         id: wallpaperId,
@@ -230,8 +229,8 @@ export class WallpaperService {
         userId: userId,
       },
     });
-    await this.cacheManager.del(`uploads${userId}`)
-    await this.cacheManager.del(`uploaded`)
+    await this.cacheManager.del(`uploads${userId}`);
+    await this.cacheManager.del(`uploaded`);
 
     await this.cacheManager.del(`profile:${userId}`);
 

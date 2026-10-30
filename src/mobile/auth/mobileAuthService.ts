@@ -10,7 +10,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MobileRegisterDto } from './dtos/register.sto';
 import * as bcrypt from 'bcrypt';
 import { MobileLoginDto } from './dtos/login.dto';
-import { JwtPaylod } from '../../auth/interfaces/jwt.payload';
 import { JwtService } from '@nestjs/jwt';
 import { checkPassword } from './helper/password_helper';
 import { UpdatePasswordDto } from './dtos/update_password.dto';
@@ -19,6 +18,7 @@ import { EmailService } from './email.service';
 import { VerifyOtpDto } from './dtos/verifyOtp.dto';
 import { ResetPasswordDto } from './dtos/resetPassword.do';
 import { MobileJwtPaylod } from '../interfaces/mobilePaylod';
+import { JwtPaylod } from '../../web/auth/interfaces/jwt.payload';
 
 @Injectable()
 export class MobileAuthService {

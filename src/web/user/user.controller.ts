@@ -9,10 +9,10 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { UserService } from './user.service';
 import type { Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { UserService } from './user.service';
 
 @Controller('user')
 @UseGuards(AuthGuard)
@@ -53,9 +53,8 @@ export class UserController {
     return this.userService.getUploadedWallpaperByUserId(userId);
   }
 
-  @Get("prompts/:id")
-  async getUserPrompts(@Param("id",ParseIntPipe) userId:number){
-    return this.userService.getUserPrompts(userId)
+  @Get('prompts/:id')
+  async getUserPrompts(@Param('id', ParseIntPipe) userId: number) {
+    return this.userService.getUserPrompts(userId);
   }
-
 }

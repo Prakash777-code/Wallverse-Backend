@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { UserProfileType } from './type/userProfile';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
@@ -12,7 +12,6 @@ export class UserService {
   ) {}
 
   async getUserProfile(userId: number) {
-
     const key = `profile:${userId}`;
     const cachedData = await this.cacheManager.get(key);
     if (cachedData) {
@@ -49,7 +48,6 @@ export class UserService {
       },
     });
 
-
     const result: UserProfileType = {
       userId: details.id,
       name: details?.name,
@@ -61,7 +59,7 @@ export class UserService {
       totalUploads: totalUploads,
     };
 
-    await this.cacheManager.set(key, result,5 * 60 * 1000,);
+    await this.cacheManager.set(key, result, 5 * 60 * 1000);
     console.log('Profile cache');
 
     console.log(result);
@@ -111,9 +109,9 @@ export class UserService {
         userId: userId,
       },
       select: {
-        id:true,
+        id: true,
         userId: true,
-        userName:true,
+        userName: true,
         imageUrl: true,
       },
     });
@@ -126,17 +124,17 @@ export class UserService {
     };
   }
 
-  async getUserPrompts(userId:number){
+  async getUserPrompts(userId: number) {
     const prompts = await this.prisma.aiGenerated.findMany({
-      where:{
-        userId:userId
+      where: {
+        userId: userId,
       },
-      select:{
-        prompt:true
-      }
-    })
-    return{
-      prompts
-    }
+      select: {
+        prompt: true,
+      },
+    });
+    return {
+      prompts,
+    };
   }
 }

@@ -5,9 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FavouriteDto } from './dto/favourites.dto';
-import { PrismaService } from '../prisma/prisma.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class FavouritesService {

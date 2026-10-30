@@ -1,18 +1,19 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { FavouritesModule } from './favourites/favourites.module';
-import { WallpapersModule } from './wallpapers/wallpapers.module';
+import { WallpapersModule } from './web/wallpapers/wallpapers.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { UserModule } from './user/user.module';
+import { UserModule } from './web/user/user.module';
 import { CacheModule } from '@nestjs/cache-manager';
-import { AiModule } from './ai/ai.module';
-import { AdminModule } from './admin/admin.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { APP_GUARD } from '@nestjs/core';
 import { MobileModule } from './mobile/mobile.module';
+import { ReportsModule } from './reports/reports.module';
+import { AuthModule } from './web/auth/auth.module';
+import { FavouritesModule } from './web/favourites/favourites.module';
+import { AiModule } from './web/ai/ai.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { MobileModule } from './mobile/mobile.module';
     AdminModule,
     CloudinaryModule,
     MobileModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [

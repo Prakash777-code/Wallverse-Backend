@@ -17,7 +17,7 @@ model User {
   plan               PLAN                 @default(FREE)
   passwordVersion    Int                  @default(1)
   aiGenerationLimit  Int                  @default(5)
-  sessionVerison            Int                  @default(1)
+  sessionVerison     Int                  @default(1)
   firstGeneration    DateTime?
   aiGenerated        AiGenerated[]
   favourites         Favourites[]
@@ -25,7 +25,8 @@ model User {
   uploadedWallpapers UploadedWallpapers[]
   notification       Notification[]
   likes              Likes[]
-  otp  Otp[]
+  otp                Otp[]
+  reports Reports  []
 }
 
 model Favourites {
@@ -83,6 +84,7 @@ model UploadedWallpapers {
   user         User           @relation(fields: [userId], references: [id])
   likes        Likes[]
   notification Notification[]
+  reports Reports[]
 
   @@unique([id, userId])
   @@index([userId])
@@ -114,12 +116,40 @@ model Notification {
 }
 
 model Otp {
-  id Int @id @default(autoincrement())
-  userId Int 
-  otpHash String
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  otpHash    String
   expiresAt  DateTime
   created_at DateTime @default(now())
-  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Reports {
+  id          Int    @id @default(autoincrement())
+  reporterId  Int  @unique
+  postId      Int
+  category    ReportCategory @default(OTHER)
+  description String
+  status      Status @default(PENDING)
+  user       User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  post UploadedWallpapers @relation(fields: [postId], references:[id], onDelete:Cascade)
+}
+
+enum ReportCategory {
+  INAPPROPRIATE_CONTENT
+  COPYRIGHT_VIOLATION
+  LOW_QUALITY
+  MISLEADING
+  SPAM
+  HATE_SPEECH
+  OTHER
+}
+
+enum Status {
+  PENDING
+  RESOLVED
+  UNDER_REVIEW
+  DISMISSED
 }
 
 enum Role {

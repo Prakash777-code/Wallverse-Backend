@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthModule } from '../auth/auth.module';
 import { JwtStrategy } from './jwtStrategy';
 import { PassportModule } from '@nestjs/passport';
 import { MobileAuthController } from './auth/mobileAuth.controller';
@@ -10,15 +9,19 @@ import { MobileWallpaperService } from './wallpaper/wallpaper.service';
 import { MobileWallpaperController } from './wallpaper/wallpaper.controller';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { EmailService } from './auth/email.service';
+import { AuthModule } from '../web/auth/auth.module';
+import { MobileReports } from './reports/reports.controller';
+import { ReportsModule } from '../reports/reports.module';
 
 
 @Module({
   providers: [JwtStrategy,MobileAuthService,MobileWallpaperService,EmailService],
-  controllers: [MobileAuthController,MobileWallpaperController],
+  controllers: [MobileAuthController,MobileWallpaperController,MobileReports],
   imports: [
     PrismaModule,
     PassportModule,
     CloudinaryModule,
+    ReportsModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
     }),
